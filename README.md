@@ -64,7 +64,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **DisGo Group Members**:
   - Alex Tilgreen Mogensen <alext@itu.dk>
   - Jakob Sønder <jakso@itu.dk>
-  - Sara Zaid Al-Janabi <salj@itu.dk>
+  - Sara Ziad Al-Janabi <salj@itu.dk>
 
 ## 📞 Contact
 
