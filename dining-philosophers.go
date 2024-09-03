@@ -36,7 +36,7 @@ func initStructs() {
 func initThreads() {
 	for _, p := range ps {
 		wg.Add(1)
-		fmt.Println("Starting thread", p.id)
+		fmt.Printf("*** Starting thread %d\n", p.id)
 		go initPhiloThread(&p)
 	}
 
@@ -49,14 +49,14 @@ func initThreads() {
 func initPhiloThread(p *p) {
 	defer wg.Done()
 	for p.nom < 5 {
-		fmt.Printf("Starting iteration of philosopher %d with nom %d\n", p.id, p.nom)
+		fmt.Printf("* Starting iteration of philosopher %d with nom %d\n", p.id, p.nom)
 
 		fl := fs[p.id]
 		fr := fs[(p.id+1)%len(ps)]
 
-		fmt.Println("Checking left fork", fr.id)
+		fmt.Printf("Philosopher %d is checking left fork%d\n", p.id, fr.id)
 		checkFork(p, fl)
-		fmt.Println("Checking right fork", fr.id)
+		fmt.Printf("Philosopher %d is checking right fork%d\n", p.id, fr.id)
 		checkFork(p, fr)
 	}
 }
@@ -97,5 +97,5 @@ func eat(p *p) {
 }
 
 func think(p *p) {
-	fmt.Printf("Philosopher %d is thinking.", p.id)
+	fmt.Printf("Philosopher %d is thinking.\n", p.id)
 }
