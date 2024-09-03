@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"sync"
 )
 
 var ps []p
 var fs []f
+var wg sync.WaitGroup
 
 type p struct {
 	id  int
@@ -21,6 +23,7 @@ type f struct {
 func main() {
 	initStructs()
 	initThreads()
+	wg.Wait()
 }
 
 func initStructs() {
@@ -32,15 +35,18 @@ func initStructs() {
 
 func initThreads() {
 	for _, p := range ps {
+		wg.Add(1)
 		go initPhiloThread(p)
 	}
 
 	for _, f := range fs {
+		wg.Add(1)
 		go initForkThread(f)
 	}
 }
 
 func initPhiloThread(p p) {
+	defer wg.Done()
 	fl := fs[p.id]
 	fr := fs[(p.id+1)%len(ps)]
 
@@ -49,6 +55,7 @@ func initPhiloThread(p p) {
 }
 
 func initForkThread(f f) {
+	defer wg.Done()
 	// pl := ps[f.id]
 	// pr := ps[(f.id-1)%len(ps)]
 }
