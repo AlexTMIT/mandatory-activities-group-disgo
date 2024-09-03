@@ -1,11 +1,16 @@
 package main
 
+import (
+	"fmt"
+)
+
 var ps []p
 var fs []f
 
 type p struct {
-	id int
-	ch chan (f)
+	id  int
+	ch  chan (f)
+	nom int
 }
 
 type f struct {
@@ -36,19 +41,45 @@ func initThreads() {
 }
 
 func initPhiloThread(p p) {
-	isEating := false
 	fl := fs[p.id]
 	fr := fs[(p.id+1)%len(ps)]
-	amount := 0
 
-	//
+	go checkFork(p, fl)
+	go checkFork(p, fr)
 }
 
 func initForkThread(f f) {
-	isUsed := false
-	pl := ps[p.id]
-	pr := ps[(p.id-1)%len(ps)]
-
+	// pl := ps[f.id]
+	// pr := ps[(f.id-1)%len(ps)]
 }
 
-// channel size is >= 2, lock
+func checkFork(p p, f f) {
+	m := <-f.ch // m is a philosopher
+	if m.ch == nil {
+		grabFork(p, f)
+	}
+}
+
+func grabFork(p p, f f) {
+	f.ch <- p // push p to f channel
+	p.ch <- f // push f to p channel
+
+	if len(p.ch) == 2 {
+		eat(p)
+	} else {
+		think(p)
+	}
+}
+
+func eat(p p) {
+	p.nom++                   // eat
+	<-fs[p.id].ch             // leave fl
+	<-fs[(p.id+1)%len(ps)].ch // leave fr
+	<-p.ch                    // leave 1 fork
+	<-p.ch                    // leave other
+	fmt.Printf("Philosopher %d ate. Now he is %d full.\n", p.id, p.nom)
+}
+
+func think(p p) {
+	fmt.Printf("Philosopher %d is thinking.", p.id)
+}
