@@ -18,23 +18,6 @@ The goal of this project is to implement the dining philosophers problem in Go, 
 - **Asynchronous Requests**: Philosophers should be able to request forks at any time; a sequential approach (executing one philosopher at a time) is not acceptable.
 - **State Display**: Philosophers must display any state changes (eating or thinking) during their execution.
 
-## Getting Started
-
-To get started with this project, follow these steps:
-
-1. **Clone the repository**:
-    ```bash
-    git clone https://github.com/<your-username>/dining-philosophers-go.git
-    ```
-2. **Navigate to the project directory**:
-    ```bash
-    cd dining-philosophers-go
-    ```
-3. **Run the program**:
-    ```bash
-    go run main.go
-    ```
-
 ## Implementation Details
 
 This implementation uses Go's goroutines and channels to model the philosophers and forks. The solution ensures no deadlock occurs by:
