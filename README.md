@@ -41,19 +41,10 @@ This implementation uses Go's goroutines and channels to model the philosophers 
 
 - Assigning a goroutine to each philosopher and fork.
 - Utilizing channels for communication between philosophers and forks.
-- Implementing a strategy where philosophers pick up the left fork first and the right fork second, ensuring a cycle that prevents deadlock.
-
-All state changes, such as a philosopher starting to **eat** or **think**, will be printed to the console.
-
-## 💡 How the Solution Prevents Deadlock
-
-This implementation prevents deadlock by:
-
-- Ensuring that a philosopher only picks up forks when both are available.
-- Using a Go channel-based mechanism that allows philosophers to signal each other about fork availability.
+- Ensuring that a philosopher only picks up forks when they are available.
 - Avoiding a situation where all philosophers hold one fork and wait indefinitely for the second one.
-
-Detailed comments in the code explain the reasoning behind these choices.
+  
+All state changes, such as a philosopher starting to **eat** or **think**, will be printed to the console.
 
 ## 📄 License
 
