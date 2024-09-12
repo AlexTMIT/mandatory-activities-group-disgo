@@ -46,8 +46,6 @@ func initThreads() {
 }
 
 func philGo(p *p) {
-	defer wg.Done()
-
 	for p.nom < LIMIT {
 		checkFork(p)
 		time.Sleep(1000)
@@ -59,11 +57,11 @@ func philGo(p *p) {
 	if amountFinished == len(ps) {
 		fmt.Printf("****** ALL PHILOSOPHERS ARE DONE EATING! ******\n")
 	}
+
+	wg.Done()
 }
 
 func forkGo(f *f) {
-	defer wg.Done()
-
 	for amountFinished < len(ps) {
 		var p1 = getPhilosopher(f.id - 1)
 		var p2 = getPhilosopher(f.id)
@@ -76,6 +74,8 @@ func forkGo(f *f) {
 			f.taken = false
 		}
 	}
+
+	wg.Done()
 }
 
 func getPhilosopher(id int) p {
