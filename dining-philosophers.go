@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
 var ps []p // philosophers
@@ -45,8 +46,9 @@ func initThreads() {
 func philGo(p *p) {
 	defer wg.Done()
 
-	for p.nom < 3 {
+	for p.nom < 1000 {
 		checkFork(p)
+		time.Sleep(1000)
 	}
 
 	amountFinished++
