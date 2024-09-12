@@ -11,6 +11,8 @@ var fs []f // forks
 var wg sync.WaitGroup
 var amountFinished = 0
 
+var LIMIT = 100
+
 type p struct {
 	id  int
 	ch  chan f
@@ -46,13 +48,17 @@ func initThreads() {
 func philGo(p *p) {
 	defer wg.Done()
 
-	for p.nom < 1000 {
+	for p.nom < LIMIT {
 		checkFork(p)
 		time.Sleep(1000)
 	}
 
 	amountFinished++
-	fmt.Printf("Philosopher %d is done eating.\n", p.id)
+	fmt.Printf("Phil %d is DONE eating.\n", p.id)
+
+	if amountFinished == len(ps) {
+		fmt.Printf("****** ALL PHILOSOPHERS ARE DONE EATING! ******\n")
+	}
 }
 
 func forkGo(f *f) {
@@ -95,9 +101,9 @@ func eat(p *p) {
 	<-p.ch
 	<-p.ch
 	p.nom++
-	fmt.Printf("Philosopher %d is now %d full.\n", p.id, p.nom)
+	fmt.Printf("Phil %d ate %d times.\n", p.id, p.nom)
 }
 
 func think(p *p) {
-	fmt.Printf("Philosopher %d is thinking.\n", p.id)
+	fmt.Printf("Phil %d is thinking.\n", p.id)
 }
