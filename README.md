@@ -1,4 +1,4 @@
-# The Dining Philosophers in Go
++# The Dining Philosophers in Go
 
 Welcome to the **DisGo** group's GitHub repository for the mandatory activity in Week 2 of the Distributed Systems course at ITU University 2024. This project is part of the 3rd-semester curriculum and focuses on solving the classic concurrency problem known as **The Dining Philosophers**.
 

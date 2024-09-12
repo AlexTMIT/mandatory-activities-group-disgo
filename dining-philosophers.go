@@ -5,17 +5,17 @@ import (
 	"sync"
 )
 
-var ps []p
-var fs []f
+var ps []p // array of philosopher
+var fs []f // array of forks
 var wg sync.WaitGroup
 
-type p struct {
+type p struct { // philosopher
 	id  int
 	ch  chan f
 	nom int
 }
 
-type f struct {
+type f struct { // fork
 	id int
 	ch chan p
 }
@@ -27,9 +27,10 @@ func main() {
 }
 
 func initStructs() {
+	// initalises and adds p's and f's to array
 	for i := 1; i <= 5; i++ {
-		ps = append(ps, p{id: i, ch: make(chan f, 2)})
-		fs = append(fs, f{id: i, ch: make(chan p, 1)})
+		ps = append(ps, p{id: i, ch: make(chan f, 2)}) // 1 p needs 2 forks
+		fs = append(fs, f{id: i, ch: make(chan p, 1)}) // only 1 f is handed to 1 p
 	}
 }
 
@@ -79,8 +80,8 @@ func eat(p *p) {
 	p.nom++                 // eat
 	<-fs[p.id-1].ch         // leave fl
 	<-fs[(p.id)%len(ps)].ch // leave fr
-	<-p.ch                  // leave 1 fork
-	<-p.ch                  // leave other
+	<-p.ch                  // 1st fork leaves
+	<-p.ch                  // 2nd fork leaves
 	fmt.Printf("Philosopher %d ate. Now he is %d full.\n", p.id, p.nom)
 }
 
