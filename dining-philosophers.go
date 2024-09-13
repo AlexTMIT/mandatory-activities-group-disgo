@@ -3,11 +3,15 @@ package main
 import (
 	"fmt"
 	"sync"
+	"time"
 )
 
-var ps []p
-var fs []f
+var ps []p // philosophers
+var fs []f // forks
 var wg sync.WaitGroup
+var amountFinished = 0
+
+var LIMIT = 100
 
 type p struct {
 	id  int
@@ -16,8 +20,8 @@ type p struct {
 }
 
 type f struct {
-	id int
-	ch chan p
+	id    int
+	taken bool
 }
 
 func main() {
@@ -29,61 +33,77 @@ func main() {
 func initStructs() {
 	for i := 1; i <= 5; i++ {
 		ps = append(ps, p{id: i, ch: make(chan f, 2)})
-		fs = append(fs, f{id: i, ch: make(chan p, 1)})
+		fs = append(fs, f{id: i, taken: false})
 	}
 }
 
 func initThreads() {
-	for _, p := range ps {
-		wg.Add(1)
-		fmt.Printf("*** Starting thread %d\n", p.id)
-		go run(&p)
+	for i := 1; i <= 5; i++ {
+		wg.Add(2)
+		go philGo(&ps[i-1])
+		go forkGo(&fs[i-1])
 	}
 }
 
-func run(p *p) {
-	defer wg.Done()
-	for p.nom < 3 {
-		//fmt.Printf("* Starting iteration of philosopher %d with nom %d\n", p.id, p.nom)
-
-		fl := fs[p.id-1]
-		fr := fs[(p.id)%len(ps)]
-
-		//fmt.Printf("Philosopher %d is checking left fork%d\n", p.id, fr.id)
-		checkFork(p, fl)
-		//fmt.Printf("Philosopher %d is checking right fork%d\n", p.id, fr.id)
-		checkFork(p, fr)
+func philGo(p *p) {
+	for p.nom < LIMIT {
+		checkFork(p)
+		time.Sleep(1000)
 	}
-	fmt.Printf("Philosopher %d is done eating.\n", p.id)
+
+	amountFinished++
+	fmt.Printf("Phil %d is DONE eating.\n", p.id)
+
+	if amountFinished == len(ps) {
+		fmt.Printf("****** ALL PHILOSOPHERS ARE DONE EATING! ******\n")
+	}
+
+	wg.Done()
 }
 
-func checkFork(p *p, f f) {
-	if len(f.ch) == 0 {
-		fmt.Printf("Fork %d has no philosopher, so philosopher %d attempts to grab it.\n", f.id, p.id)
-		grabFork(p, f)
+func forkGo(f *f) {
+	for amountFinished < len(ps) {
+		var p1 = getPhilosopher(f.id - 1)
+		var p2 = getPhilosopher(f.id)
+
+		if len(p1.ch) < 2 {
+			enterChannel(p1, f)
+		} else if len(p2.ch) < 2 {
+			enterChannel(p2, f)
+		} else {
+			f.taken = false
+		}
 	}
+
+	wg.Done()
 }
 
-func grabFork(p *p, f f) {
-	f.ch <- *p // push p to f channel
-	p.ch <- f  // push f to p channel
+func getPhilosopher(id int) p {
+	return ps[(id)%len(ps)]
+}
 
-	if len(p.ch) == 2 {
-		eat(p)
-	} else {
-		think(p)
+func enterChannel(p p, f *f) {
+	p.ch <- *f
+	f.taken = true
+}
+
+func checkFork(p *p) {
+	think(p)
+
+	if len(p.ch) != 2 {
+		return
 	}
+
+	eat(p)
 }
 
 func eat(p *p) {
-	p.nom++                 // eat
-	<-fs[p.id-1].ch         // leave fl
-	<-fs[(p.id)%len(ps)].ch // leave fr
-	<-p.ch                  // leave 1 fork
-	<-p.ch                  // leave other
-	fmt.Printf("Philosopher %d ate. Now he is %d full.\n", p.id, p.nom)
+	<-p.ch
+	<-p.ch
+	p.nom++
+	fmt.Printf("Phil %d ate %d times.\n", p.id, p.nom)
 }
 
 func think(p *p) {
-	fmt.Printf("Philosopher %d is thinking.\n", p.id)
+	fmt.Printf("Phil %d is thinking.\n", p.id)
 }
