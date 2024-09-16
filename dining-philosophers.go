@@ -8,10 +8,9 @@ import (
 
 var ps []p // philosophers
 var fs []f // forks
-var wg sync.WaitGroup
 var amountFinished = 0
 
-var LIMIT = 100
+var LIMIT = 1000
 
 type p struct {
 	id  int
@@ -25,8 +24,9 @@ type f struct {
 }
 
 func main() {
+	wg := new(sync.WaitGroup)
 	initStructs()
-	initThreads()
+	initThreads(wg)
 	wg.Wait()
 }
 
@@ -37,15 +37,22 @@ func initStructs() {
 	}
 }
 
-func initThreads() {
+func initThreads(wg *sync.WaitGroup) {
 	for i := 1; i <= 5; i++ {
 		wg.Add(2)
-		go philGo(&ps[i-1])
-		go forkGo(&fs[i-1])
+		go func() {
+			defer wg.Done()
+			philGo(&ps[i-1])
+		}()
+		go func() {
+			defer wg.Done()
+			forkGo(&fs[i-1])
+		}()
 	}
 }
 
 func philGo(p *p) {
+	for p.nom < LIMIT {
 	for p.nom < LIMIT {
 		checkFork(p)
 		time.Sleep(1000)
@@ -57,8 +64,6 @@ func philGo(p *p) {
 	if amountFinished == len(ps) {
 		fmt.Printf("****** ALL PHILOSOPHERS ARE DONE EATING! ******\n")
 	}
-
-	wg.Done()
 }
 
 func forkGo(f *f) {
@@ -83,8 +88,11 @@ func getPhilosopher(id int) p {
 }
 
 func enterChannel(p p, f *f) {
-	p.ch <- *f
-	f.taken = true
+	select {
+	case p.ch <- *f:
+		f.taken = true
+	default:
+	}
 }
 
 func checkFork(p *p) {
