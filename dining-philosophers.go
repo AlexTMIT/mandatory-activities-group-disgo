@@ -53,7 +53,6 @@ func initThreads(wg *sync.WaitGroup) {
 
 func philGo(p *p) {
 	for p.nom < LIMIT {
-	for p.nom < LIMIT {
 		checkFork(p)
 		time.Sleep(1000)
 	}
@@ -79,8 +78,6 @@ func forkGo(f *f) {
 			f.taken = false
 		}
 	}
-
-	wg.Done()
 }
 
 func getPhilosopher(id int) p {
