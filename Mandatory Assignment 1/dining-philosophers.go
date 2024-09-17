@@ -10,7 +10,7 @@ var ps []p // philosophers
 var fs []f // forks
 var amountFinished = 0
 
-var LIMIT = 1000
+var LIMIT = 1000 // can do at least 1.000.000
 
 type p struct {
 	id  int
@@ -54,17 +54,24 @@ func initThreads(wg *sync.WaitGroup) {
 func philGo(p *p) {
 	for p.nom < LIMIT {
 		checkFork(p)
-		time.Sleep(1000)
+		time.Sleep(1000) // to get variety in output
 	}
 
 	amountFinished++
 	fmt.Printf("Phil %d is DONE eating.\n", p.id)
 
-	if amountFinished == len(ps) {
+	if allFinishedEating() {
 		fmt.Printf("****** ALL PHILOSOPHERS ARE DONE EATING! ******\n")
 	}
 }
 
+func allFinishedEating() bool {
+	return amountFinished == len(ps)
+}
+
+// this function continuously checks and redistributes forks,
+// preventing any philosopher from holding onto a fork indefinitely,
+// eliminating circular wait conditions and potential deadlock scenarios
 func forkGo(f *f) {
 	for amountFinished < len(ps) {
 		var p1 = getPhilosopher(f.id - 1)
@@ -84,6 +91,9 @@ func getPhilosopher(id int) p {
 	return ps[(id)%len(ps)]
 }
 
+// the channel and select statements ensure that a
+// philosopher can only eat if both forks are available
+// otherwise, they continue thinking without a fork.
 func enterChannel(p p, f *f) {
 	select {
 	case p.ch <- *f:
