@@ -55,37 +55,36 @@ func initThread(wg *sync.WaitGroup) {
 }
 
 func clientGo(client *client, server *server) {
-	fmt.Println("running client")
+	fmt.Printf("running client. client seq starts at %d\n", client.seq)
 	for !finished {
-		fmt.Println("running client in forloop")
 		if !client.ready {
 			server.ch <- client.seq
 			server.ready = true
 		} else {
-			fmt.Println("running client in else statement")
 			client.seq = <-client.ch //server's ack no.
-			<-client.ch
+			//<-client.ch
 
 			var msg = <-client.ch
 			client.ack = msg + 1
 
 			server.ch <- client.seq
 			server.ch <- client.ack
+			fmt.Println("Almost finished")
 			finished = true
 			break
 		}
 	}
-	fmt.Println("Connection established!")
+	fmt.Printf("Client connection established! Client seq is %d. Client ack is %d\n", client.seq, client.ack)
 	// client vil sende seq nummer ind til server
 	// client skal herefter vente til, at client får 2 numre ind i sin egen kanal
 	// når client får besken, vil den gerne sende serveren's seq + 1, plus sin egen seq nummer + 1
 }
 
 func serverGo(client *client, server *server) {
-	fmt.Println("running server")
-	for server.ready {
-		fmt.Println("running server in forloop")
+	fmt.Printf("server seq starts at %d\n", server.seq)
+	for !finished {
 		if server.ready {
+			client.ready = true
 			var msg = <-server.ch
 			server.ack = msg + 1
 
@@ -94,11 +93,9 @@ func serverGo(client *client, server *server) {
 
 			<-server.ch
 
-			client.ready = true
+			server.ready = false
 		}
-		server.ready = false
 	}
-	fmt.Println("Connection established!")
-	// serveren modtager beskeden fra client
-	// serveren vil gerne sende sin egen seq ind i client's channel, og client's seq + 1
+	fmt.Printf("Server connection established! Server seq is %d. Server ack is %d\n", server.seq, server.ack)
+
 }
