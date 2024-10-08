@@ -1,0 +1,36 @@
+syntax = "proto3";
+
+package chittychat;
+
+option go_package = "github.com/AlexTMIT/mandatory-activities-group-disgo/tree/main/mandatory-assignment-3/lamport_service";
+
+service chittychatService {
+    rpc GetMessage (chatRequest) returns (chatResponse) {}
+    rpc ProcessJoinRequest (joinRequest) returns (joinResponse) {}
+    rpc ProcessLeaveRequest (leaveRequest) returns (leaveResponse) {}
+}
+
+message chatRequest {
+    string msg = 1;
+    string ParticipantName = 2;
+}
+
+message chatResponse {
+    string msg = 1;
+}
+
+message joinRequest {
+    string ParticipantName = 1;
+}
+
+message joinResponse {
+    string msg = 1;
+}
+
+message leaveRequest {
+    string ParticipantName = 1;
+}
+
+message leaveResponse {
+    string msg = 1;
+}
