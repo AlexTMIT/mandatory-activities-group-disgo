@@ -1,7 +1,17 @@
-syntax = "proto3;
+syntax = "proto3";
 
 package chittychat;
 
-import "google/protobuf/timestamp.proto";
+option go_package = "github.com/AlexTMIT/mandatory-activities-group-disgo/tree/main/mandatory-assignment-3/lamport_service";
 
-option go_package = "github.com
+service lamportTimeStamp {
+    rpc GetClientMessage (participantRequest) returns (participantResponse) {}
+}
+
+message participantRequest {
+    string id = 1;
+}
+
+message participantResponse {
+    string broadcast = 1;
+}
