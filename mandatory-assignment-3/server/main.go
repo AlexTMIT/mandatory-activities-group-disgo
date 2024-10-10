@@ -10,36 +10,69 @@ import (
 	"google.golang.org/grpc"
 )
 
+var lamport int32 = 0
+var messages []string
+
 type server struct {
 	pb.UnimplementedChittychatServiceServer
 }
 
+func addMessage(msg string) {
+	lamport++
+
+	messages = append(messages, msg)
+}
+
 func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
-	fmt.Printf("Participant %s joined Chitty-Chat at Lamport time L\n", req.ParticipantName)
+	fmt.Printf("Participant %s joined Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
+
+	msg := fmt.Sprintf("Welcome to ChittyChat, %s", req.ParticipantName)
+
+	addMessage(msg)
 
 	return &pb.JoinResponse{
-		Msg: fmt.Sprintf("Welcome to ChittyChat, %s\n", req.ParticipantName),
+		Msg:       msg,
+		Timestamp: lamport,
 	}, nil
 }
 
 func (s *server) ProcessLeaveRequest(ctx context.Context, req *pb.LeaveRequest) (*pb.LeaveResponse, error) {
-	fmt.Printf("Participant %s has left Chitty-Chat at Lamport time L\n", req.ParticipantName)
+	fmt.Printf("Participant %s has left Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
+
+	msg := fmt.Sprintf("See you later, %s", req.ParticipantName)
+
+	addMessage(msg)
 
 	return &pb.LeaveResponse{
-		Msg: fmt.Sprintf("See you later, %s\n", req.ParticipantName),
+		Msg: msg,
 	}, nil
 }
 
 func (s *server) GetMessage(ctx context.Context, req *pb.ChatRequest) (*pb.ChatResponse, error) {
 	if len(req.Msg) > 128 {
 		return &pb.ChatResponse{
-			Msg: "ERROR: Your message was not sent. Reason: message was longer than 128 characters.\n",
+			Msg: "ERROR: Your message was not sent. Reason: message was longer than 128 characters.",
 		}, nil
 	} else {
+
+		msg := fmt.Sprintf("%s: %s", req.ParticipantName, req.Msg)
+
+		addMessage(msg)
+
 		return &pb.ChatResponse{
-			Msg: fmt.Sprintf("%s: %s\n", req.ParticipantName, req.Msg),
+			Msg: msg,
 		}, nil
 	}
+}
+
+func (s *server) ProcessBroadcastRequest(ctx context.Context, req *pb.BroadcastRequest) (*pb.BroadcastResponse, error) {
+	clientLamport := req.Timestamp
+	newMessages := messages[clientLamport:]
+
+	return &pb.BroadcastResponse{
+		BroadcastMessages: newMessages,
+		Timestamp:         lamport,
+	}, nil
 }
 
 func main() {

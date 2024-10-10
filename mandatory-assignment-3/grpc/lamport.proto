@@ -8,6 +8,7 @@ service chittychatService {
     rpc GetMessage (chatRequest) returns (chatResponse) {}
     rpc ProcessJoinRequest (joinRequest) returns (joinResponse) {}
     rpc ProcessLeaveRequest (leaveRequest) returns (leaveResponse) {}
+    rpc ProcessBroadcastRequest (broadcastRequest) returns (broadcastResponse) {}
 }
 
 message chatRequest {
@@ -19,12 +20,22 @@ message chatResponse {
     string msg = 1;
 }
 
+message broadcastRequest {
+    int32 timestamp = 1;
+}
+
+message broadcastResponse {
+    repeated string broadcastMessages = 1;
+    int32 timestamp = 2;
+}
+
 message joinRequest {
     string ParticipantName = 1;
 }
 
 message joinResponse {
     string msg = 1;
+    int32 timestamp = 2;
 }
 
 message leaveRequest {

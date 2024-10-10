@@ -17,6 +17,7 @@ import (
 
 var running bool
 var name string
+var lamport int32
 
 func main() {
 	conn, err := grpc.NewClient("localhost:50051", grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -30,9 +31,24 @@ func main() {
 	defer cancel()
 
 	join(ctx, c)
+
+	go fetchNewMessages(ctx, c)
+
 	for running {
-		listen(ctx, c)
-		time.Sleep(1 * time.Second)
+		listenToInput(ctx, c)
+	}
+}
+
+func fetchNewMessages(ctx context.Context, c pb.ChittychatServiceClient) {
+	for running {
+		req, err := c.ProcessBroadcastRequest(ctx, &pb.BroadcastRequest{Timestamp: lamport})
+		if err != nil {
+			log.Println("Could not fetch new messages")
+		}
+		for _, s := range req.BroadcastMessages {
+			log.Println(s)
+		}
+		lamport = req.Timestamp
 	}
 }
 
@@ -46,6 +62,7 @@ func join(ctx context.Context, c pb.ChittychatServiceClient) {
 	}
 	log.Printf("%s", req.Msg)
 	running = true
+	lamport = req.Timestamp
 }
 
 func leave(ctx context.Context, c pb.ChittychatServiceClient) {
@@ -59,14 +76,13 @@ func leave(ctx context.Context, c pb.ChittychatServiceClient) {
 }
 
 func chat(msg string, ctx context.Context, c pb.ChittychatServiceClient) {
-	req, err := c.GetMessage(ctx, &pb.ChatRequest{Msg: msg, ParticipantName: name})
+	_, err := c.GetMessage(ctx, &pb.ChatRequest{Msg: msg, ParticipantName: name})
 	if err != nil {
 		log.Println("Error in sending message.")
 	}
-	log.Printf("%s", req.Msg)
 }
 
-func listen(ctx context.Context, c pb.ChittychatServiceClient) {
+func listenToInput(ctx context.Context, c pb.ChittychatServiceClient) {
 	reader := bufio.NewReader(os.Stdin)
 
 	command, err := reader.ReadString('\n')
