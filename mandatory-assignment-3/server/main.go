@@ -26,7 +26,7 @@ func addMessage(msg string) {
 func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
 	fmt.Printf("Participant %s joined Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
 
-	msg := fmt.Sprintf("Welcome to ChittyChat, %s", req.ParticipantName)
+	msg := fmt.Sprintf("[L%d]: Welcome to ChittyChat, %s", lamport, req.ParticipantName)
 
 	addMessage(msg)
 
@@ -39,7 +39,7 @@ func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*
 func (s *server) ProcessLeaveRequest(ctx context.Context, req *pb.LeaveRequest) (*pb.LeaveResponse, error) {
 	fmt.Printf("Participant %s has left Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
 
-	msg := fmt.Sprintf("See you later, %s", req.ParticipantName)
+	msg := fmt.Sprintf("[L%d]: See you later, %s.", lamport, req.ParticipantName)
 
 	addMessage(msg)
 
@@ -51,12 +51,10 @@ func (s *server) ProcessLeaveRequest(ctx context.Context, req *pb.LeaveRequest) 
 func (s *server) GetMessage(ctx context.Context, req *pb.ChatRequest) (*pb.ChatResponse, error) {
 	if len(req.Msg) > 128 {
 		return &pb.ChatResponse{
-			Msg: "ERROR: Your message was not sent. Reason: message was longer than 128 characters.",
+			Msg: "ERROR: Your message was not sent. Message was more than 128 characters.",
 		}, nil
 	} else {
-
-		msg := fmt.Sprintf("%s: %s", req.ParticipantName, req.Msg)
-
+		msg := fmt.Sprintf("%s at [L%d]: %s", req.ParticipantName, lamport, req.Msg)
 		addMessage(msg)
 
 		return &pb.ChatResponse{

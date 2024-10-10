@@ -66,12 +66,11 @@ func join(ctx context.Context, c pb.ChittychatServiceClient) {
 }
 
 func leave(ctx context.Context, c pb.ChittychatServiceClient) {
-	req, err := c.ProcessLeaveRequest(ctx, &pb.LeaveRequest{ParticipantName: name})
+	_, err := c.ProcessLeaveRequest(ctx, &pb.LeaveRequest{ParticipantName: name})
 	if err != nil {
-		log.Println("You took too long, please try again.")
+		log.Println("Error in leaving chat.")
 	}
 
-	log.Printf("%s\n", req.Msg)
 	running = false
 }
 
