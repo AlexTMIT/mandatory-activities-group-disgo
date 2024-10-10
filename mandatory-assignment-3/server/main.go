@@ -72,7 +72,7 @@ func (s *server) ProcessBroadcastRequest(ctx context.Context, req *pb.BroadcastR
 }
 
 func main() {
-	port := "20.82.131.107:8080"
+	port := "0.0.0.0:8080"
 
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
