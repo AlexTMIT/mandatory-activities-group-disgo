@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"time"
 
 	pb "lamport_service/grpc"
 
@@ -27,8 +26,7 @@ func main() {
 	defer conn.Close()
 	c := pb.NewChittychatServiceClient(conn)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
-	defer cancel()
+	ctx := context.Background()
 
 	join(ctx, c)
 

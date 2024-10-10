@@ -19,15 +19,12 @@ type server struct {
 
 func addMessage(msg string) {
 	lamport++
-
 	messages = append(messages, msg)
+	log.Println(msg)
 }
 
 func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinResponse, error) {
-	fmt.Printf("Participant %s joined Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
-
-	msg := fmt.Sprintf("[L%d]: Welcome to ChittyChat, %s", lamport, req.ParticipantName)
-
+	msg := fmt.Sprintf("Participant %s joined Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
 	addMessage(msg)
 
 	return &pb.JoinResponse{
@@ -37,10 +34,7 @@ func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*
 }
 
 func (s *server) ProcessLeaveRequest(ctx context.Context, req *pb.LeaveRequest) (*pb.LeaveResponse, error) {
-	fmt.Printf("Participant %s has left Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
-
-	msg := fmt.Sprintf("[L%d]: See you later, %s.", lamport, req.ParticipantName)
-
+	msg := fmt.Sprintf("Participant %s has left Chitty-Chat at Lamport time %d", req.ParticipantName, lamport)
 	addMessage(msg)
 
 	return &pb.LeaveResponse{
