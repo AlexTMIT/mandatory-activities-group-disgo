@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -65,12 +67,17 @@ func chat(msg string, ctx context.Context, c pb.ChittychatServiceClient) {
 }
 
 func listen(ctx context.Context, c pb.ChittychatServiceClient) {
-	var command string
-	fmt.Scanln(&command)
+	reader := bufio.NewReader(os.Stdin)
+
+	command, err := reader.ReadString('\n')
+	if err != nil {
+		log.Printf("Error reading input: %v", err)
+		return
+	}
+
+	command = strings.TrimSpace(command)
 	split := strings.Split(command, " ")
 	keyword := strings.ToLower(split[0])
-
-	fmt.Println(strings.Join(split, " "))
 
 	if keyword == "leave" {
 		leave(ctx, c)
