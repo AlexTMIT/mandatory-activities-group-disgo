@@ -44,7 +44,7 @@ func join(ctx context.Context, c pb.ChittychatServiceClient) {
 	if err != nil {
 		log.Println("You took too long, please try again")
 	}
-	log.Printf("%s\n", req.Msg)
+	log.Printf("%s", req.Msg)
 	running = true
 }
 
@@ -63,7 +63,7 @@ func chat(msg string, ctx context.Context, c pb.ChittychatServiceClient) {
 	if err != nil {
 		log.Println("Error in sending message.")
 	}
-	log.Printf("%s\n", req.Msg)
+	log.Printf("%s", req.Msg)
 }
 
 func listen(ctx context.Context, c pb.ChittychatServiceClient) {
