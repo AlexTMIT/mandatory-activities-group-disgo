@@ -19,7 +19,8 @@ var name string
 var lamport int32
 
 func main() {
-	conn, err := grpc.NewClient("0.0.0.0:80", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	port := "0.0.0.0:8080"
+	conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("did not connect %v", err)
 	}
