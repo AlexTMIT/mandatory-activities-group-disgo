@@ -40,28 +40,42 @@ func join(ctx context.Context, c pb.ChittychatServiceClient) {
 
 	req, err := c.ProcessJoinRequest(ctx, &pb.JoinRequest{ParticipantName: name})
 	if err != nil {
-		log.Print("You took too long, please try again")
+		log.Println("You took too long, please try again")
 	}
-	log.Printf(req.Msg)
+	log.Printf("%s\n", req.Msg)
 	running = true
 }
 
 func leave(ctx context.Context, c pb.ChittychatServiceClient) {
 	req, err := c.ProcessLeaveRequest(ctx, &pb.LeaveRequest{ParticipantName: name})
 	if err != nil {
-		log.Print("You took too long, please try again")
+		log.Println("You took too long, please try again.")
 	}
 
-	log.Printf(req.Msg)
+	log.Printf("%s\n", req.Msg)
 	running = false
+}
+
+func chat(msg string, ctx context.Context, c pb.ChittychatServiceClient) {
+	req, err := c.GetMessage(ctx, &pb.ChatRequest{Msg: msg, ParticipantName: name})
+	if err != nil {
+		log.Println("Error in sending message.")
+	}
+	log.Printf("%s\n", req.Msg)
 }
 
 func listen(ctx context.Context, c pb.ChittychatServiceClient) {
 	var command string
 	fmt.Scanln(&command)
 	split := strings.Split(command, " ")
+	keyword := strings.ToLower(split[0])
 
-	if strings.ToLower(split[0]) == "leave" {
+	fmt.Println(strings.Join(split, " "))
+
+	if keyword == "leave" {
 		leave(ctx, c)
+	} else if keyword == "chat" {
+		msg := strings.Join(split[1:], " ")
+		chat(msg, ctx, c)
 	}
 }

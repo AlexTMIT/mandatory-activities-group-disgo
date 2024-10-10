@@ -32,7 +32,7 @@ func (s *server) ProcessLeaveRequest(ctx context.Context, req *pb.LeaveRequest) 
 
 func (s *server) GetMessage(ctx context.Context, req *pb.ChatRequest) (*pb.ChatResponse, error) {
 	return &pb.ChatResponse{
-		Msg: fmt.Sprintf("Participant joined Chitty-Chat at Lamport time L"),
+		Msg: fmt.Sprintf("%s: %s", req.ParticipantName, req.Msg),
 	}, nil
 }
 
