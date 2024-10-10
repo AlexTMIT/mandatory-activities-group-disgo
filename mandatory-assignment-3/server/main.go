@@ -72,13 +72,13 @@ func (s *server) ProcessBroadcastRequest(ctx context.Context, req *pb.BroadcastR
 }
 
 func main() {
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+	lis, err := net.Listen("tcp", "0.0.0.0:80")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterChittychatServiceServer(s, &server{})
-	log.Println("Server is running on port 50051...")
+	log.Println("Server is running on port 80...")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
