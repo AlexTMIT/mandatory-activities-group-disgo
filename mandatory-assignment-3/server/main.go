@@ -65,7 +65,11 @@ func (s *server) GetMessage(ctx context.Context, req *pb.ChatRequest) (*pb.ChatR
 
 func (s *server) ProcessBroadcastRequest(ctx context.Context, req *pb.BroadcastRequest) (*pb.BroadcastResponse, error) {
 	clientLamport := req.Timestamp
-	newMessages := messages[clientLamport:]
+	var newMessages []string
+
+	if len(messages) > 0 {
+		newMessages = messages[clientLamport:]
+	}
 
 	return &pb.BroadcastResponse{
 		BroadcastMessages: newMessages,
