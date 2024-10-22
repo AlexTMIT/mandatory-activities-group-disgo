@@ -1,5 +1,5 @@
 # ChittyChat 
-Welcome to DisGo's ChittyChat Program! This README-file is here to provide you help with running the program, both as a server and as a client.
+Welcome to DisGo's ChittyChat Program! This README-file is here to provide you help when running the program, both as a server and as a client.
 Please follow the guide step by step to run it smoothly.
 
 ## Guide to run the server
