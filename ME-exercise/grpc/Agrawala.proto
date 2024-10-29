@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package me-exercise;
+
+option go_package = "github.com/AlexTMIT/mandatory-activities-group-disgo/tree/main/ME-exercise/ME-implementation";
+
+service meService {
+    rpc ProcessMutualExclusion (request) returns (reply) {}
+}
+
+message request {
+    int32 lamport = 1;
+    int32 id = 2;
+}
+
+message reply {}
