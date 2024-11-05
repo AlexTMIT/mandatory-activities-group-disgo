@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sort"
 	"strconv"
 
 	"google.golang.org/grpc"
@@ -46,8 +47,15 @@ func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest)
 
 func (s *process) JoiningQueue(ctx context.Context, req *pb.JoiningRequest) (*pb.JoiningReply, error) {
 	requests = append(requests, queueItem{port: req.Port, lamport: req.Lamport})
+	SortClientsByLamport()
 
 	return &pb.JoiningReply{}, nil
+}
+
+func SortClientsByLamport() {
+	sort.Slice(clients, func(i, j int) bool {
+		return requests[i].lamport < requests[j].lamport
+	})
 }
 
 func inRequest() bool {
