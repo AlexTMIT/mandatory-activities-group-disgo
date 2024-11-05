@@ -14,6 +14,12 @@ var port string
 var id int32
 var ports []string
 var currentState State
+var requests []queueItem
+
+type queueItem struct {
+	id      int32
+	lamport int32
+}
 
 type process struct {
 	pb.UnimplementedConsensusServiceServer
@@ -28,6 +34,28 @@ func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest)
 func Run(porto string, idi int32, portList []string) {
 	initialize(porto, idi, portList)
 
+	for {
+		if !inRequest() {
+			broadcastCSRequest()
+		}
+	}
+}
+
+func inRequest() bool {
+	for _, e := range requests {
+		if e.id == id {
+			return true
+		}
+	}
+
+	return false
+}
+
+func broadcastCSRequest() {
+
+}
+
+func initProcessServer() {
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -46,4 +74,6 @@ func initialize(porto string, idi int32, portList []string) {
 	id = idi
 	ports = portList
 	currentState = RELEASED
+
+	initProcessServer()
 }
