@@ -13,6 +13,7 @@ import (
 var port string
 var id int32
 var ports []string
+var currentState State
 
 type process struct {
 	pb.UnimplementedConsensusServiceServer
@@ -44,4 +45,5 @@ func initialize(porto string, idi int32, portList []string) {
 	port = porto
 	id = idi
 	ports = portList
+	currentState = RELEASED
 }
