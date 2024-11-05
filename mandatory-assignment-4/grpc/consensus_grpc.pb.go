@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	ConsensusService_CriticalSection_FullMethodName = "/consensus.ConsensusService/CriticalSection"
 	ConsensusService_GetLamport_FullMethodName      = "/consensus.ConsensusService/GetLamport"
+	ConsensusService_JoiningQueue_FullMethodName    = "/consensus.ConsensusService/JoiningQueue"
 )
 
 // ConsensusServiceClient is the client API for ConsensusService service.
@@ -29,6 +30,7 @@ const (
 type ConsensusServiceClient interface {
 	CriticalSection(ctx context.Context, in *CriticalRequest, opts ...grpc.CallOption) (*CriticalReply, error)
 	GetLamport(ctx context.Context, in *LamportRequest, opts ...grpc.CallOption) (*LamportReply, error)
+	JoiningQueue(ctx context.Context, in *JoiningRequest, opts ...grpc.CallOption) (*JoiningReply, error)
 }
 
 type consensusServiceClient struct {
@@ -59,12 +61,23 @@ func (c *consensusServiceClient) GetLamport(ctx context.Context, in *LamportRequ
 	return out, nil
 }
 
+func (c *consensusServiceClient) JoiningQueue(ctx context.Context, in *JoiningRequest, opts ...grpc.CallOption) (*JoiningReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoiningReply)
+	err := c.cc.Invoke(ctx, ConsensusService_JoiningQueue_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusServiceServer is the server API for ConsensusService service.
 // All implementations must embed UnimplementedConsensusServiceServer
 // for forward compatibility.
 type ConsensusServiceServer interface {
 	CriticalSection(context.Context, *CriticalRequest) (*CriticalReply, error)
 	GetLamport(context.Context, *LamportRequest) (*LamportReply, error)
+	JoiningQueue(context.Context, *JoiningRequest) (*JoiningReply, error)
 	mustEmbedUnimplementedConsensusServiceServer()
 }
 
@@ -80,6 +93,9 @@ func (UnimplementedConsensusServiceServer) CriticalSection(context.Context, *Cri
 }
 func (UnimplementedConsensusServiceServer) GetLamport(context.Context, *LamportRequest) (*LamportReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetLamport not implemented")
+}
+func (UnimplementedConsensusServiceServer) JoiningQueue(context.Context, *JoiningRequest) (*JoiningReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method JoiningQueue not implemented")
 }
 func (UnimplementedConsensusServiceServer) mustEmbedUnimplementedConsensusServiceServer() {}
 func (UnimplementedConsensusServiceServer) testEmbeddedByValue()                          {}
@@ -138,6 +154,24 @@ func _ConsensusService_GetLamport_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusService_JoiningQueue_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoiningRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusServiceServer).JoiningQueue(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusService_JoiningQueue_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusServiceServer).JoiningQueue(ctx, req.(*JoiningRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusService_ServiceDesc is the grpc.ServiceDesc for ConsensusService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -152,6 +186,10 @@ var ConsensusService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLamport",
 			Handler:    _ConsensusService_GetLamport_Handler,
+		},
+		{
+			MethodName: "JoiningQueue",
+			Handler:    _ConsensusService_JoiningQueue_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

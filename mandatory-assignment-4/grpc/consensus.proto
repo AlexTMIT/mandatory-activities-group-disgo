@@ -7,6 +7,7 @@ option go_package = "https://github.com/AlexTMIT/mandatory-activities-group-disg
 service ConsensusService {
     rpc CriticalSection (criticalRequest) returns (criticalReply) {}
     rpc GetLamport (lamportRequest) returns (lamportReply) {}
+    rpc JoiningQueue (joiningRequest) returns (joiningReply) {}
 }
 
 message criticalRequest {
@@ -21,3 +22,10 @@ message lamportRequest {}
 message lamportReply {
     int32 lamport = 1;
 }
+
+message joiningRequest {
+    int32 lamport = 1;
+    int32 port = 2;
+}
+
+message joiningReply{}

@@ -37,12 +37,17 @@ type process struct {
 
 func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
 	currentState = WANTED
-	requests = append(requests, queueItem{port: req.Port, lamport: req.Lamport})
 	replies++
 
 	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d", req.Port, req.Lamport)
 
 	return &pb.CriticalReply{}, nil
+}
+
+func (s *process) JoiningQueue(ctx context.Context, req *pb.JoiningRequest) (*pb.JoiningReply, error) {
+	requests = append(requests, queueItem{port: req.Port, lamport: req.Lamport})
+
+	return &pb.JoiningReply{}, nil
 }
 
 func inRequest() bool {
@@ -62,7 +67,7 @@ func createClients() {
 	}
 }
 
-func broadcastCSRequest() {
+func multicastCSRequest() {
 	for i := 0; i < len(clients); i++ {
 		var client = clients[i]
 		makeRequest(client.ctx, client.c)
@@ -86,7 +91,6 @@ func makeRequest(ctx context.Context, c pb.ConsensusServiceClient) {
 	if err != nil {
 		log.Println("You took too long, please try again")
 	}
-
 }
 
 func initProcessServer() {
@@ -115,13 +119,31 @@ func initialize(porto string, portList []string) {
 	initProcessServer()
 }
 
+func checkReplies() {
+	if replies == int32(len(ports)-1) {
+		currentState = HELD
+		for i := 0; i < len(clients); i++ {
+			multicastJoiningRequest(i)
+		}
+	}
+}
+
+func multicastJoiningRequest(i int) {
+	_, err := clients[i].c.JoiningQueue(clients[i].ctx, &pb.JoiningRequest{Port: id, Lamport: lamport})
+	if err != nil {
+		log.Println("You took too long, please try again")
+	}
+}
+
 func Run(porto string, portList []string) {
 	initialize(porto, portList)
+
+	go checkReplies()
 
 	for {
 		if !inRequest() {
 			replies = 0
-			broadcastCSRequest()
+			multicastCSRequest()
 		}
 	}
 }
