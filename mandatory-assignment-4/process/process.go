@@ -6,22 +6,29 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"strconv"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var port string
 var id int32
+var serverPort string
 var lamport int32
 var ports []string
 var currentState State
 var requests []queueItem
 var replies int32
+var clients []client
 
 type queueItem struct {
-	id      int32
+	port    int32
 	lamport int32
+}
+
+type client struct {
+	ctx context.Context
+	c   pb.ConsensusServiceClient
 }
 
 type process struct {
@@ -30,22 +37,20 @@ type process struct {
 
 func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
 	currentState = WANTED
-	var item = queueItem{
-		id:      req.Id,
-		lamport: req.Lamport,
-	}
-	requests = append(requests, item)
+	requests = append(requests, queueItem{port: req.Port, lamport: req.Lamport})
+	replies++
 
-	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d", req.Id, req.Lamport)
+	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d", req.Port, req.Lamport)
 
 	return &pb.CriticalReply{}, nil
 }
 
-func Run(porto string, idi int32, portList []string) {
-	initialize(porto, idi, portList)
+func Run(porto string, portList []string) {
+	initialize(porto, portList)
 
 	for {
 		if !inRequest() {
+			replies = 0
 			broadcastCSRequest()
 		}
 	}
@@ -53,7 +58,7 @@ func Run(porto string, idi int32, portList []string) {
 
 func inRequest() bool {
 	for _, e := range requests {
-		if e.id == id {
+		if e.port == id {
 			return true
 		}
 	}
@@ -61,10 +66,17 @@ func inRequest() bool {
 	return false
 }
 
-func broadcastCSRequest() {
+func createClients() {
 	for i := 0; i < len(ports); i++ {
 		ctx, c := createClient(ports[i])
-		join(ctx, c)
+		clients = append(clients, client{ctx: ctx, c: c})
+	}
+}
+
+func broadcastCSRequest() {
+	for i := 0; i < len(clients); i++ {
+		var client = clients[i]
+		makeRequest(client.ctx, client.c)
 	}
 }
 
@@ -80,32 +92,36 @@ func createClient(port string) (ctx context.Context, c pb.ConsensusServiceClient
 	return
 }
 
-func join(ctx context.Context, c pb.ConsensusServiceClient) {
-	_, err := c.CriticalSection(ctx, &pb.CriticalRequest{Id: id, Lamport: lamport})
+func makeRequest(ctx context.Context, c pb.ConsensusServiceClient) {
+	_, err := c.CriticalSection(ctx, &pb.CriticalRequest{Port: id, Lamport: lamport})
 	if err != nil {
 		log.Println("You took too long, please try again")
 	}
+
 }
 
 func initProcessServer() {
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", serverPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterConsensusServiceServer(s, &process{})
-	log.Printf("Server is running on port %s...\n", port)
+	log.Printf("Server is running on port %s...\n", serverPort)
 
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to run process: %v", err)
 	}
 }
 
-func initialize(porto string, idi int32, portList []string) {
-	port = porto
-	id = idi
+func initialize(porto string, portList []string) {
+	serverPort = porto
 	ports = portList
 	currentState = RELEASED
 
+	p, _ := strconv.Atoi(serverPort[:5])
+	id = int32(p)
+
+	createClients()
 	initProcessServer()
 }

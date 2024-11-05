@@ -22,7 +22,6 @@ func main() {
 
 	for i := 0; i < n; i++ {
 		var port = ports[i]
-		var id = int32(i)
-		process.Run(port, id, ports)
+		process.Run(port, ports)
 	}
 }

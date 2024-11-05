@@ -11,7 +11,7 @@ service ConsensusService {
 
 message criticalRequest {
     int32 lamport = 1;
-    int32 id = 2;
+    int32 port = 2;
 }
 
 message criticalReply {}
