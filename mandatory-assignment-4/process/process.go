@@ -13,6 +13,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+var isInsideCS bool
+var isCSEmpty bool
 var id int32
 var serverPort string
 var lamport int32
@@ -23,7 +25,7 @@ var replies int32
 var clients []client
 
 type queueItem struct {
-	port    int32
+	id      int32
 	lamport int32
 }
 
@@ -46,10 +48,23 @@ func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest)
 }
 
 func (s *process) JoiningQueue(ctx context.Context, req *pb.JoiningRequest) (*pb.JoiningReply, error) {
-	requests = append(requests, queueItem{port: req.Port, lamport: req.Lamport})
+	requests = append(requests, queueItem{id: req.Port, lamport: req.Lamport})
 	SortClientsByLamport()
 
 	return &pb.JoiningReply{}, nil
+}
+
+func (s *process) EnteringCS(ctx context.Context, req *pb.EnteringCSRequest) (*pb.EnteringCSReply, error) {
+	isCSEmpty = false
+
+	return &pb.EnteringCSReply{}, nil
+}
+
+func (s *process) ExitingCS(ctx context.Context, req *pb.ExitingCSRequest) (*pb.ExitingCSReply, error) {
+	isCSEmpty = true
+	requests = requests[1:]
+
+	return &pb.ExitingCSReply{}, nil
 }
 
 func SortClientsByLamport() {
@@ -60,7 +75,7 @@ func SortClientsByLamport() {
 
 func inRequest() bool {
 	for _, e := range requests {
-		if e.port == id {
+		if e.id == id {
 			return true
 		}
 	}
@@ -136,6 +151,31 @@ func checkReplies() {
 	}
 }
 
+func multicastEnteringRequest(i int) {
+	_, err := clients[i].c.EnteringCS(clients[i].ctx, &pb.EnteringCSRequest{})
+	if err != nil {
+		log.Println("You took too long, please try again")
+	}
+}
+
+func multicastExitingRequest(i int) {
+	_, err := clients[i].c.ExitingCS(clients[i].ctx, &pb.ExitingCSRequest{})
+	if err != nil {
+		log.Println("You took too long, please try again")
+	}
+}
+
+func multicastLamportRequest(i int) {
+	rep, err := clients[i].c.GetLamport(clients[i].ctx, &pb.LamportRequest{})
+	if err != nil {
+		log.Println("You took too long, please try again")
+	}
+
+	if rep.Lamport > lamport {
+		lamport = rep.Lamport + 1
+	}
+}
+
 func multicastJoiningRequest(i int) {
 	_, err := clients[i].c.JoiningQueue(clients[i].ctx, &pb.JoiningRequest{Port: id, Lamport: lamport})
 	if err != nil {
@@ -143,13 +183,26 @@ func multicastJoiningRequest(i int) {
 	}
 }
 
+func insideCS() {
+	if requests[0].id == int32(id) && isCSEmpty {
+		for i := 0; i < len(clients); i++ {
+			multicastEnteringRequest(i)
+			multicastLamportRequest(i)
+			fmt.Printf("Client %d has entered CS", id)
+			multicastExitingRequest(i)
+			fmt.Printf("Client %d has left CS", id)
+		}
+	}
+}
+
 func Run(porto string, portList []string) {
 	initialize(porto, portList)
 
 	go checkReplies()
+	go insideCS()
 
 	for {
-		if !inRequest() {
+		if !isInsideCS && !inRequest() {
 			replies = 0
 			multicastCSRequest()
 		}

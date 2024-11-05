@@ -8,6 +8,8 @@ service ConsensusService {
     rpc CriticalSection (criticalRequest) returns (criticalReply) {}
     rpc GetLamport (lamportRequest) returns (lamportReply) {}
     rpc JoiningQueue (joiningRequest) returns (joiningReply) {}
+    rpc EnteringCS (enteringCSRequest) returns (enteringCSReply) {}
+    rpc ExitingCS (exitingCSRequest) returns (exitingCSReply) {}
 }
 
 message criticalRequest {
@@ -29,3 +31,11 @@ message joiningRequest {
 }
 
 message joiningReply{}
+
+message enteringCSRequest {}
+
+message enteringCSReply {}
+
+message exitingCSRequest {}
+
+message exitingCSReply {}

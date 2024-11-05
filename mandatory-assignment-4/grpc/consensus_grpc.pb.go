@@ -22,6 +22,8 @@ const (
 	ConsensusService_CriticalSection_FullMethodName = "/consensus.ConsensusService/CriticalSection"
 	ConsensusService_GetLamport_FullMethodName      = "/consensus.ConsensusService/GetLamport"
 	ConsensusService_JoiningQueue_FullMethodName    = "/consensus.ConsensusService/JoiningQueue"
+	ConsensusService_EnteringCS_FullMethodName      = "/consensus.ConsensusService/EnteringCS"
+	ConsensusService_ExitingCS_FullMethodName       = "/consensus.ConsensusService/ExitingCS"
 )
 
 // ConsensusServiceClient is the client API for ConsensusService service.
@@ -31,6 +33,8 @@ type ConsensusServiceClient interface {
 	CriticalSection(ctx context.Context, in *CriticalRequest, opts ...grpc.CallOption) (*CriticalReply, error)
 	GetLamport(ctx context.Context, in *LamportRequest, opts ...grpc.CallOption) (*LamportReply, error)
 	JoiningQueue(ctx context.Context, in *JoiningRequest, opts ...grpc.CallOption) (*JoiningReply, error)
+	EnteringCS(ctx context.Context, in *EnteringCSRequest, opts ...grpc.CallOption) (*EnteringCSReply, error)
+	ExitingCS(ctx context.Context, in *ExitingCSRequest, opts ...grpc.CallOption) (*ExitingCSReply, error)
 }
 
 type consensusServiceClient struct {
@@ -71,6 +75,26 @@ func (c *consensusServiceClient) JoiningQueue(ctx context.Context, in *JoiningRe
 	return out, nil
 }
 
+func (c *consensusServiceClient) EnteringCS(ctx context.Context, in *EnteringCSRequest, opts ...grpc.CallOption) (*EnteringCSReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(EnteringCSReply)
+	err := c.cc.Invoke(ctx, ConsensusService_EnteringCS_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *consensusServiceClient) ExitingCS(ctx context.Context, in *ExitingCSRequest, opts ...grpc.CallOption) (*ExitingCSReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ExitingCSReply)
+	err := c.cc.Invoke(ctx, ConsensusService_ExitingCS_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ConsensusServiceServer is the server API for ConsensusService service.
 // All implementations must embed UnimplementedConsensusServiceServer
 // for forward compatibility.
@@ -78,6 +102,8 @@ type ConsensusServiceServer interface {
 	CriticalSection(context.Context, *CriticalRequest) (*CriticalReply, error)
 	GetLamport(context.Context, *LamportRequest) (*LamportReply, error)
 	JoiningQueue(context.Context, *JoiningRequest) (*JoiningReply, error)
+	EnteringCS(context.Context, *EnteringCSRequest) (*EnteringCSReply, error)
+	ExitingCS(context.Context, *ExitingCSRequest) (*ExitingCSReply, error)
 	mustEmbedUnimplementedConsensusServiceServer()
 }
 
@@ -96,6 +122,12 @@ func (UnimplementedConsensusServiceServer) GetLamport(context.Context, *LamportR
 }
 func (UnimplementedConsensusServiceServer) JoiningQueue(context.Context, *JoiningRequest) (*JoiningReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method JoiningQueue not implemented")
+}
+func (UnimplementedConsensusServiceServer) EnteringCS(context.Context, *EnteringCSRequest) (*EnteringCSReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EnteringCS not implemented")
+}
+func (UnimplementedConsensusServiceServer) ExitingCS(context.Context, *ExitingCSRequest) (*ExitingCSReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ExitingCS not implemented")
 }
 func (UnimplementedConsensusServiceServer) mustEmbedUnimplementedConsensusServiceServer() {}
 func (UnimplementedConsensusServiceServer) testEmbeddedByValue()                          {}
@@ -172,6 +204,42 @@ func _ConsensusService_JoiningQueue_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ConsensusService_EnteringCS_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EnteringCSRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusServiceServer).EnteringCS(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusService_EnteringCS_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusServiceServer).EnteringCS(ctx, req.(*EnteringCSRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ConsensusService_ExitingCS_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ExitingCSRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ConsensusServiceServer).ExitingCS(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ConsensusService_ExitingCS_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ConsensusServiceServer).ExitingCS(ctx, req.(*ExitingCSRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ConsensusService_ServiceDesc is the grpc.ServiceDesc for ConsensusService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,6 +258,14 @@ var ConsensusService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "JoiningQueue",
 			Handler:    _ConsensusService_JoiningQueue_Handler,
+		},
+		{
+			MethodName: "EnteringCS",
+			Handler:    _ConsensusService_EnteringCS_Handler,
+		},
+		{
+			MethodName: "ExitingCS",
+			Handler:    _ConsensusService_ExitingCS_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
