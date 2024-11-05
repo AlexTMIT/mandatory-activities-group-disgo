@@ -8,10 +8,12 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 var port string
 var id int32
+var lamport int32
 var ports []string
 var currentState State
 var requests []queueItem
@@ -52,7 +54,29 @@ func inRequest() bool {
 }
 
 func broadcastCSRequest() {
+	for i := 0; i < len(ports); i++ {
+		ctx, c := createClient(ports[i])
+		join(ctx, c)
+	}
+}
 
+func createClient(port string) (ctx context.Context, c pb.ConsensusServiceClient) {
+	conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		log.Fatalf("did not connect %v", err)
+	}
+	defer conn.Close()
+	c = pb.NewConsensusServiceClient(conn)
+
+	ctx = context.Background()
+	return
+}
+
+func join(ctx context.Context, c pb.ConsensusServiceClient) {
+	_, err := c.CriticalSection(ctx, &pb.CriticalRequest{Id: id, Lamport: lamport})
+	if err != nil {
+		log.Println("You took too long, please try again")
+	}
 }
 
 func initProcessServer() {
