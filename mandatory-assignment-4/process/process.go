@@ -1,4 +1,4 @@
-package main
+package process
 
 import (
 	pb "consensus/grpc"
@@ -12,6 +12,7 @@ import (
 
 var port string
 var id int32
+var ports []string
 
 type process struct {
 	pb.UnimplementedConsensusServiceServer
@@ -23,9 +24,8 @@ func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest)
 	return &pb.CriticalReply{}, nil
 }
 
-func Run(porto string, idi int32) {
-	port = porto
-	id = idi
+func Run(porto string, idi int32, portList []string) {
+	initialize(porto, idi, portList)
 
 	lis, err := net.Listen("tcp", port)
 	if err != nil {
@@ -38,4 +38,10 @@ func Run(porto string, idi int32) {
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to run process: %v", err)
 	}
+}
+
+func initialize(porto string, idi int32, portList []string) {
+	port = porto
+	id = idi
+	ports = portList
 }
