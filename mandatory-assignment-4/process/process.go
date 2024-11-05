@@ -45,17 +45,6 @@ func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest)
 	return &pb.CriticalReply{}, nil
 }
 
-func Run(porto string, portList []string) {
-	initialize(porto, portList)
-
-	for {
-		if !inRequest() {
-			replies = 0
-			broadcastCSRequest()
-		}
-	}
-}
-
 func inRequest() bool {
 	for _, e := range requests {
 		if e.port == id {
@@ -124,4 +113,15 @@ func initialize(porto string, portList []string) {
 
 	createClients()
 	initProcessServer()
+}
+
+func Run(porto string, portList []string) {
+	initialize(porto, portList)
+
+	for {
+		if !inRequest() {
+			replies = 0
+			broadcastCSRequest()
+		}
+	}
 }
