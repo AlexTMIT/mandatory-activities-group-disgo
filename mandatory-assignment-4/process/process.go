@@ -17,6 +17,7 @@ var lamport int32
 var ports []string
 var currentState State
 var requests []queueItem
+var replies int32
 
 type queueItem struct {
 	id      int32
@@ -28,6 +29,13 @@ type process struct {
 }
 
 func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
+	currentState = WANTED
+	var item = queueItem{
+		id:      req.Id,
+		lamport: req.Lamport,
+	}
+	requests = append(requests, item)
+
 	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d", req.Id, req.Lamport)
 
 	return &pb.CriticalReply{}, nil
