@@ -8,6 +8,7 @@ import (
 	"net"
 	"sort"
 	"strconv"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -142,18 +143,6 @@ func (s *process) initProcessServer() {
 	}
 }
 
-func (s *process) initialize(porto string, portList []string) {
-	s.vars.serverPort = porto
-	s.vars.ports = portList
-	s.vars.currentState = RELEASED
-
-	p, _ := strconv.Atoi(s.vars.serverPort[:5])
-	s.vars.id = int32(p)
-
-	s.createClients()
-	s.initProcessServer()
-}
-
 func (s *process) checkReplies() {
 	if s.vars.replies == int32(len(s.vars.ports)-1) {
 		s.vars.currentState = HELD
@@ -220,17 +209,34 @@ func (s *process) shouldMulticast() bool {
 	return true
 }
 
+func (s *process) initialize(porto string, portList []string) {
+	s.vars.serverPort = porto
+	s.vars.ports = portList
+	s.vars.currentState = RELEASED
+
+	p, _ := strconv.Atoi(s.vars.serverPort[:5])
+	s.vars.id = int32(p)
+
+	s.createClients()
+}
+
 func Run(porto string, portList []string) {
 	s := newProcess()
 	s.initialize(porto, portList)
 
+	// start the server
+	go s.initProcessServer()
+
+	// start other goroutines
 	go s.checkReplies()
 	go s.insideCS()
 
+	// main loop
 	for {
 		if s.shouldMulticast() {
 			s.vars.replies = 0
 			s.multicastCSRequest()
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
