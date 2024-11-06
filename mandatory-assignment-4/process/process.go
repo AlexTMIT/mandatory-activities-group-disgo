@@ -213,7 +213,7 @@ func (s *process) initialize(porto string, portList []string) {
 	s.vars.ports = portList
 	s.vars.currentState = RELEASED
 
-	p, _ := strconv.Atoi(s.vars.serverPort[:5])
+	p, _ := strconv.Atoi(s.vars.serverPort[len("localhost:"):])
 	s.vars.id = int32(p)
 
 	s.createClients()
