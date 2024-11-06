@@ -56,7 +56,7 @@ func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) 
 	s.vars.currentState = WANTED
 	s.vars.replies++
 
-	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d", req.Port, req.Lamport)
+	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d\n", req.Port, req.Lamport)
 
 	return &pb.CriticalReply{}, nil
 }
