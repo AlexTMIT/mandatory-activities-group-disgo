@@ -128,7 +128,7 @@ func createClient(port string) (ctx context.Context, c pb.ConsensusServiceClient
 func (s *process) makeRequest(ctx context.Context, c pb.ConsensusServiceClient) {
 	_, err := c.CriticalSection(ctx, &pb.CriticalRequest{Port: s.vars.id, Lamport: s.vars.lamport})
 	if err != nil {
-		log.Println("Error in making request")
+		log.Printf("Error in making request: %v\n", err)
 	}
 }
 
@@ -158,7 +158,7 @@ func (s *process) checkReplies() {
 func (s *process) multicastEnteringRequest(i int) {
 	_, err := s.vars.clients[i].c.EnteringCS(s.vars.clients[i].ctx, &pb.EnteringCSRequest{})
 	if err != nil {
-		log.Println("Error in multicastEnteringRequest:", err)
+		log.Printf("Error in multicastEnteringRequest: %v\n", err)
 	}
 }
 
@@ -222,7 +222,10 @@ func (s *process) initialize(porto string, portList []string) {
 	s.vars.ports = portList
 	s.vars.currentState = RELEASED
 
-	p, _ := strconv.Atoi(s.vars.serverPort[len("localhost:"):])
+	p, _ := strconv.Atoi(porto[len("localhost:"):])
+
+	fmt.Printf("parsed id %d from serverPort %s\n", p, porto)
+
 	s.vars.id = int32(p)
 
 	s.createClients()
