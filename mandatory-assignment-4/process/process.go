@@ -53,12 +53,34 @@ func newProcess() *process {
 }
 
 func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
-	s.vars.currentState = WANTED
-	s.vars.replies++
+	// update lamport
+	if req.Lamport > s.vars.lamport {
+		s.vars.lamport = req.Lamport
+	}
+	s.vars.lamport++
 
-	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d\n", req.Port, req.Lamport)
+	// decide whether to grant access
+	grant := false
 
-	return &pb.CriticalReply{}, nil
+	if s.vars.currentState == RELEASED {
+		grant = true
+	} else if s.vars.currentState == HELD {
+		grant = false
+	} else if s.vars.currentState == WANTED {
+		if req.Lamport < s.vars.lamport || (req.Lamport == s.vars.lamport && req.Port < s.vars.id) {
+			grant = false
+		} else {
+			grant = true
+		}
+	}
+
+	if grant {
+		return &pb.CriticalReply{Grant: true}, nil
+	} else {
+		// queue the request
+		s.vars.requests = append(s.vars.requests, queueItem{id: req.Port, lamport: req.Lamport})
+		return &pb.CriticalReply{Grant: false}, nil
+	}
 }
 
 func (s *process) JoiningQueue(ctx context.Context, req *pb.JoiningRequest) (*pb.JoiningReply, error) {
