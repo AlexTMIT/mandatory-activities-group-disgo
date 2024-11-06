@@ -158,21 +158,22 @@ func (s *process) checkReplies() {
 func (s *process) multicastEnteringRequest(i int) {
 	_, err := s.vars.clients[i].c.EnteringCS(s.vars.clients[i].ctx, &pb.EnteringCSRequest{})
 	if err != nil {
-		log.Println("You took too long, please try again")
+		log.Println("Error in multicastEnteringRequest:", err)
 	}
 }
 
 func (s *process) multicastExitingRequest(i int) {
 	_, err := s.vars.clients[i].c.ExitingCS(s.vars.clients[i].ctx, &pb.ExitingCSRequest{})
 	if err != nil {
-		log.Println("You took too long, please try again")
+		log.Println("Error in multicastExitingRequest:", err)
 	}
 }
 
 func (s *process) multicastLamportRequest(i int) {
 	rep, err := s.vars.clients[i].c.GetLamport(s.vars.clients[i].ctx, &pb.LamportRequest{})
 	if err != nil {
-		log.Println("You took too long, please try again")
+		log.Println("Error in multicastLamportRequest:", err)
+		return
 	}
 
 	if rep.Lamport > s.vars.lamport {
@@ -183,7 +184,7 @@ func (s *process) multicastLamportRequest(i int) {
 func (s *process) multicastJoiningRequest(i int) {
 	_, err := s.vars.clients[i].c.JoiningQueue(s.vars.clients[i].ctx, &pb.JoiningRequest{Port: s.vars.id, Lamport: s.vars.lamport})
 	if err != nil {
-		log.Println("You took too long, please try again")
+		log.Println("Error in multicastJoiningRequest:", err)
 	}
 }
 
