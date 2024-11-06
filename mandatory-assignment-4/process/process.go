@@ -41,6 +41,16 @@ type process struct {
 	vars *vars
 }
 
+func newProcess() *process {
+	return &process{
+		vars: &vars{
+			isInsideCS:   false,
+			isCSEmpty:    true,
+			currentState: RELEASED,
+		},
+	}
+}
+
 func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
 	currentState = WANTED
 	replies++
