@@ -195,6 +195,22 @@ func insideCS() {
 	}
 }
 
+func shouldMulticast() bool {
+	if isInsideCS {
+		return false
+	}
+
+	if inRequest() {
+		return false
+	}
+
+	if replies > 0 && int(replies) < len(ports)-1 {
+		return false
+	}
+
+	return true
+}
+
 func Run(porto string, portList []string) {
 	initialize(porto, portList)
 
@@ -202,7 +218,7 @@ func Run(porto string, portList []string) {
 	go insideCS()
 
 	for {
-		if !isInsideCS && !inRequest() {
+		if shouldMulticast() {
 			replies = 0
 			multicastCSRequest()
 		}
