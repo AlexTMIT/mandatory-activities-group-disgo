@@ -128,7 +128,7 @@ func createClient(port string) (ctx context.Context, c pb.ConsensusServiceClient
 func (s *process) makeRequest(ctx context.Context, c pb.ConsensusServiceClient) {
 	_, err := c.CriticalSection(ctx, &pb.CriticalRequest{Port: s.vars.id, Lamport: s.vars.lamport})
 	if err != nil {
-		log.Println("You took too long, please try again")
+		log.Println("Error in making request")
 	}
 }
 
