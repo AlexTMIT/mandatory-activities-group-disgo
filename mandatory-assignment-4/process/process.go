@@ -81,6 +81,10 @@ func (s *process) ExitingCS(ctx context.Context, req *pb.ExitingCSRequest) (*pb.
 	return &pb.ExitingCSReply{}, nil
 }
 
+func (s *process) GetLamport(ctx context.Context, req *pb.LamportRequest) (*pb.LamportReply, error) {
+	return &pb.LamportReply{Lamport: s.vars.lamport}, nil
+}
+
 func (s *process) SortClientsByLamport() {
 	sort.Slice(s.vars.clients, func(i, j int) bool {
 		return s.vars.requests[i].lamport < s.vars.requests[j].lamport
