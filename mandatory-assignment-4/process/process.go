@@ -115,7 +115,6 @@ func createClient(port string) (ctx context.Context, c pb.ConsensusServiceClient
 	if err != nil {
 		log.Fatalf("did not connect %v", err)
 	}
-	defer conn.Close()
 	c = pb.NewConsensusServiceClient(conn)
 
 	ctx = context.Background()
