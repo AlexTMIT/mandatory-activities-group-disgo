@@ -188,7 +188,11 @@ func (s *process) multicastJoiningRequest(i int) {
 	}
 }
 
-func (s *process) insideCS() {
+func (s *process) goInsideCS() {
+	if len(s.vars.requests) == 0 {
+		return
+	}
+
 	if s.vars.requests[0].id == s.vars.id && s.vars.isCSEmpty {
 		for i := 0; i < len(s.vars.clients); i++ {
 			s.multicastEnteringRequest(i)
@@ -233,7 +237,7 @@ func Run(porto string, portList []string) {
 
 	// start other goroutines
 	go s.checkReplies()
-	go s.insideCS()
+	go s.goInsideCS()
 
 	// main loop
 	for {
