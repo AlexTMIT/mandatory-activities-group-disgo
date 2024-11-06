@@ -13,16 +13,18 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var isInsideCS bool
-var isCSEmpty bool
-var id int32
-var serverPort string
-var lamport int32
-var ports []string
-var currentState State
-var requests []queueItem
-var replies int32
-var clients []client
+type vars struct {
+	isInsideCS   bool
+	isCSEmpty    bool
+	id           int32
+	serverPort   string
+	lamport      int32
+	ports        []string
+	currentState State
+	requests     []queueItem
+	replies      int32
+	clients      []client
+}
 
 type queueItem struct {
 	id      int32
@@ -36,6 +38,7 @@ type client struct {
 
 type process struct {
 	pb.UnimplementedConsensusServiceServer
+	vars *vars
 }
 
 func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
