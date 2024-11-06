@@ -52,7 +52,7 @@ func newProcess() *process {
 	}
 }
 
-func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
+func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
 	s.vars.currentState = WANTED
 	s.vars.replies++
 
