@@ -4,7 +4,6 @@ import (
 	"consensus/process"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 var n int
@@ -26,7 +25,5 @@ func main() {
 		go process.Run(port, ports)
 	}
 
-	for {
-		time.Sleep(100000)
-	}
+	select {}
 }
