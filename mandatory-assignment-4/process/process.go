@@ -182,23 +182,28 @@ func (s *process) initProcessServer() {
 func (s *process) checkReplies() {
 	for {
 		s.vars.mu.Lock()
-		if s.vars.currentState == WANTED && s.vars.replies == int32(len(s.vars.clients)) {
+		if s.vars.currentState == WANTED && s.vars.replies == int32(len(s.vars.clients)-1) {
 			s.vars.currentState = HELD
 			s.vars.isInsideCS = true
+			s.vars.mu.Unlock()
 
-			fmt.Printf("process %d has entered cs\n", s.vars.id)
-			time.Sleep(1 * time.Second)
+			// Simulate entering the critical section
+			fmt.Printf("process %d has entered CS\n", s.vars.id)
+			time.Sleep(1 * time.Second) // simulate time spent in CS
+			fmt.Printf("process %d has left CS\n", s.vars.id)
 
+			s.vars.mu.Lock()
 			s.vars.isInsideCS = false
 			s.vars.currentState = RELEASED
 			s.vars.replies = 0
-
-			s.sendDeferredReplies()
 			s.vars.mu.Unlock()
-			fmt.Printf("process %d has left cs\n", s.vars.id)
+
+			// Send any deferred replies to other processes
+			s.sendDeferredReplies()
 		} else {
 			s.vars.mu.Unlock()
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }
 
