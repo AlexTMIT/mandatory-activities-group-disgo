@@ -69,7 +69,7 @@ func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) 
 	} else if s.vars.currentState == HELD {
 		grant = false
 	} else if s.vars.currentState == WANTED {
-		if req.Lamport < s.vars.lamport || (req.Lamport == s.vars.lamport && req.Port < s.vars.id) {
+		if req.Lamport > s.vars.lamport || req.Port > s.vars.id {
 			grant = false
 		} else {
 			grant = true
@@ -78,6 +78,7 @@ func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) 
 
 	if grant {
 		return &pb.CriticalReply{Grant: true}, nil
+
 	} else {
 		// queue the request
 		s.vars.requests = append(s.vars.requests, queueItem{id: req.Port, lamport: req.Lamport})
@@ -93,10 +94,8 @@ func (s *process) ReplyCS(ctx context.Context, req *pb.ReplyRequest) (*pb.ReplyR
 }
 
 func (s *process) sendDeferredReplies() {
-	s.vars.mu.Lock()
 	deferredRequests := s.vars.requests
 	s.vars.requests = nil
-	s.vars.mu.Unlock()
 
 	for _, req := range deferredRequests {
 		s.sendReply(req)
@@ -186,22 +185,19 @@ func (s *process) checkReplies() {
 		if s.vars.currentState == WANTED && s.vars.replies == int32(len(s.vars.clients)) {
 			s.vars.currentState = HELD
 			s.vars.isInsideCS = true
-			s.vars.mu.Unlock()
 
 			fmt.Printf("process %d has entered cs\n", s.vars.id)
-			time.Sleep(1 * time.Second) // simulate critical section
-			fmt.Printf("process %d has left cs\n", s.vars.id)
+			time.Sleep(1 * time.Second)
 
-			s.vars.mu.Lock()
 			s.vars.isInsideCS = false
 			s.vars.currentState = RELEASED
 			s.vars.replies = 0
-			s.vars.mu.Unlock()
 
 			s.sendDeferredReplies()
+			s.vars.mu.Unlock()
+			fmt.Printf("process %d has left cs\n", s.vars.id)
 		} else {
 			s.vars.mu.Unlock()
-			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
@@ -225,7 +221,7 @@ func (s *process) initialize(porto string, portList []string) {
 	go s.initProcessServer()
 
 	// wait to ensure the server is running
-	time.Sleep(500 * time.Millisecond)
+	time.Sleep(2 * time.Second)
 
 	s.createClients()
 }
@@ -243,10 +239,10 @@ func Run(porto string, portList []string) {
 			s.vars.mu.Lock()
 			s.vars.currentState = WANTED
 			s.vars.replies = 0
+			go s.multicastCSRequest()
 			s.vars.lamport++
 			s.vars.mu.Unlock()
 
-			s.multicastCSRequest()
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
