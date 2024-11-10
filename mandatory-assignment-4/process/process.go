@@ -203,7 +203,7 @@ func (s *process) checkReplies() {
 		} else {
 			s.vars.mu.Unlock()
 		}
-		time.Sleep(100 * time.Millisecond)
+		//time.Sleep(100 * time.Millisecond)
 	}
 }
 
