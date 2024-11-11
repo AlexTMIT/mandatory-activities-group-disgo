@@ -189,7 +189,6 @@ func (s *process) checkReplies() {
 
 			// Simulate entering the critical section
 			fmt.Printf("process %d has entered CS\n", s.vars.id)
-			time.Sleep(1 * time.Second) // simulate time spent in CS
 			fmt.Printf("process %d has left CS\n", s.vars.id)
 
 			s.vars.mu.Lock()
