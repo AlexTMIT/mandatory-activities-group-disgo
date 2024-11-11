@@ -56,6 +56,8 @@ func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) 
 	s.vars.mu.Lock()
 	defer s.vars.mu.Unlock()
 
+	fmt.Printf("Process %d received request from process %d\n", s.vars.id, req.Port)
+
 	// update lamport clock
 	if req.Lamport > s.vars.lamport {
 		s.vars.lamport = req.Lamport
