@@ -3,7 +3,6 @@ package process
 import (
 	pb "consensus/grpc"
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"strconv"
@@ -56,7 +55,7 @@ func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) 
 	s.vars.mu.Lock()
 	defer s.vars.mu.Unlock()
 
-	fmt.Printf("Process %d received request from process %d\n", s.vars.id, req.Port)
+	log.Printf("Process %d received request from process %d\n", s.vars.id, req.Port)
 
 	// update lamport clock
 	if req.Lamport > s.vars.lamport {
@@ -185,18 +184,18 @@ func (s *process) checkReplies() {
 	for {
 		s.vars.mu.Lock()
 		if s.vars.currentState == WANTED && s.vars.replies == int32(len(s.vars.clients)-1) {
+			log.Printf("process %d has entered CS\n", s.vars.id)
 			s.vars.currentState = HELD
 			s.vars.isInsideCS = true
 			s.vars.mu.Unlock()
 
 			// Simulate entering the critical section
-			fmt.Printf("process %d has entered CS\n", s.vars.id)
-			fmt.Printf("process %d has left CS\n", s.vars.id)
 
 			s.vars.mu.Lock()
 			s.vars.isInsideCS = false
 			s.vars.currentState = RELEASED
 			s.vars.replies = 0
+			log.Printf("process %d has left CS\n", s.vars.id)
 			s.vars.mu.Unlock()
 
 			// Send any deferred replies to other processes
