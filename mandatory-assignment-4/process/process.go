@@ -3,26 +3,28 @@ package process
 import (
 	pb "consensus/grpc"
 	"context"
-	"fmt"
 	"log"
 	"net"
-	"sort"
 	"strconv"
+	"sync"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-var isInsideCS bool
-var isCSEmpty bool
-var id int32
-var serverPort string
-var lamport int32
-var ports []string
-var currentState State
-var requests []queueItem
-var replies int32
-var clients []client
+type vars struct {
+	mu           sync.Mutex
+	isInsideCS   bool
+	id           int32
+	serverPort   string
+	lamport      int32
+	ports        []string
+	currentState State
+	requests     []queueItem
+	replies      int32
+	clients      []client
+}
 
 type queueItem struct {
 	id      int32
@@ -32,179 +34,221 @@ type queueItem struct {
 type client struct {
 	ctx context.Context
 	c   pb.ConsensusServiceClient
+	id  int32
 }
 
 type process struct {
 	pb.UnimplementedConsensusServiceServer
+	vars *vars
 }
 
-func (s *process) ProcessConsensus(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
-	currentState = WANTED
-	replies++
-
-	fmt.Printf("Process %d is requesting to join Critical Section at Lamport time %d", req.Port, req.Lamport)
-
-	return &pb.CriticalReply{}, nil
+func newProcess() *process {
+	return &process{
+		vars: &vars{
+			isInsideCS:   false,
+			currentState: RELEASED,
+		},
+	}
 }
 
-func (s *process) JoiningQueue(ctx context.Context, req *pb.JoiningRequest) (*pb.JoiningReply, error) {
-	requests = append(requests, queueItem{id: req.Port, lamport: req.Lamport})
-	SortClientsByLamport()
+func (s *process) CriticalSection(ctx context.Context, req *pb.CriticalRequest) (*pb.CriticalReply, error) {
+	s.vars.mu.Lock()
+	defer s.vars.mu.Unlock()
 
-	return &pb.JoiningReply{}, nil
-}
+	log.Printf("Process %d received request from process %d\n", s.vars.id, req.Port)
 
-func (s *process) EnteringCS(ctx context.Context, req *pb.EnteringCSRequest) (*pb.EnteringCSReply, error) {
-	isCSEmpty = false
+	// update lamport clock
+	if req.Lamport > s.vars.lamport {
+		s.vars.lamport = req.Lamport
+	}
+	s.vars.lamport++
 
-	return &pb.EnteringCSReply{}, nil
-}
-
-func (s *process) ExitingCS(ctx context.Context, req *pb.ExitingCSRequest) (*pb.ExitingCSReply, error) {
-	isCSEmpty = true
-	requests = requests[1:]
-
-	return &pb.ExitingCSReply{}, nil
-}
-
-func SortClientsByLamport() {
-	sort.Slice(clients, func(i, j int) bool {
-		return requests[i].lamport < requests[j].lamport
-	})
-}
-
-func inRequest() bool {
-	for _, e := range requests {
-		if e.id == id {
-			return true
+	// decide whether to grant access
+	var grant bool
+	if s.vars.currentState == RELEASED {
+		grant = true
+	} else if s.vars.currentState == HELD {
+		grant = false
+	} else if s.vars.currentState == WANTED {
+		if req.Lamport > s.vars.lamport || req.Port > s.vars.id {
+			grant = false
+		} else {
+			grant = true
 		}
 	}
 
-	return false
-}
+	if grant {
+		return &pb.CriticalReply{Grant: true}, nil
 
-func createClients() {
-	for i := 0; i < len(ports); i++ {
-		ctx, c := createClient(ports[i])
-		clients = append(clients, client{ctx: ctx, c: c})
+	} else {
+		// queue the request
+		s.vars.requests = append(s.vars.requests, queueItem{id: req.Port, lamport: req.Lamport})
+		return &pb.CriticalReply{Grant: false}, nil
 	}
 }
 
-func multicastCSRequest() {
-	for i := 0; i < len(clients); i++ {
-		var client = clients[i]
-		makeRequest(client.ctx, client.c)
+func (s *process) ReplyCS(ctx context.Context, req *pb.ReplyRequest) (*pb.ReplyReply, error) {
+	s.vars.mu.Lock()
+	s.vars.replies++
+	s.vars.mu.Unlock()
+	return &pb.ReplyReply{}, nil
+}
+
+func (s *process) sendDeferredReplies() {
+	deferredRequests := s.vars.requests
+	s.vars.requests = nil
+
+	for _, req := range deferredRequests {
+		s.sendReply(req)
+	}
+}
+func (s *process) sendReply(req queueItem) {
+	// Find the client for the requesting process
+	var client *client
+	for i := range s.vars.clients {
+		c := &s.vars.clients[i]
+		if c.id == req.id {
+			client = c
+			break
+		}
+	}
+
+	if client != nil {
+		_, err := client.c.ReplyCS(client.ctx, &pb.ReplyRequest{Port: s.vars.id})
+		if err != nil {
+			log.Printf("error sending deferred reply to %d: %v\n", req.id, err)
+		}
+	} else {
+		log.Printf("client not found for process %d", req.id)
+	}
+}
+
+func (s *process) createClients() {
+	for i := 0; i < len(s.vars.ports); i++ {
+		portStr := s.vars.ports[i]
+		if portStr != s.vars.serverPort {
+			ctx, c := createClient(portStr)
+
+			// Extract the process ID from the port string
+			p, _ := strconv.Atoi(portStr[len("localhost:"):])
+			clientID := int32(p)
+
+			s.vars.clients = append(s.vars.clients, client{ctx: ctx, c: c, id: clientID})
+		}
 	}
 }
 
 func createClient(port string) (ctx context.Context, c pb.ConsensusServiceClient) {
 	conn, err := grpc.NewClient(port, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Fatalf("did not connect %v", err)
+		log.Fatalf("did not connect: %v", err)
 	}
-	defer conn.Close()
 	c = pb.NewConsensusServiceClient(conn)
-
 	ctx = context.Background()
 	return
 }
 
-func makeRequest(ctx context.Context, c pb.ConsensusServiceClient) {
-	_, err := c.CriticalSection(ctx, &pb.CriticalRequest{Port: id, Lamport: lamport})
+func (s *process) makeRequest(ctx context.Context, c pb.ConsensusServiceClient) {
+	resp, err := c.CriticalSection(ctx, &pb.CriticalRequest{Port: s.vars.id, Lamport: s.vars.lamport})
 	if err != nil {
-		log.Println("You took too long, please try again")
+		log.Printf("error in making request: %v\n", err)
+	} else if resp.Grant {
+		s.vars.mu.Lock()
+		s.vars.replies++
+		s.vars.mu.Unlock()
 	}
 }
 
-func initProcessServer() {
-	lis, err := net.Listen("tcp", serverPort)
+func (s *process) multicastCSRequest() {
+	for i := 0; i < len(s.vars.clients); i++ {
+		var client = s.vars.clients[i]
+		s.makeRequest(client.ctx, client.c)
+	}
+}
+
+func (s *process) initProcessServer() {
+	lis, err := net.Listen("tcp", s.vars.serverPort)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterConsensusServiceServer(s, &process{})
-	log.Printf("Server is running on port %s...\n", serverPort)
+	grpcServer := grpc.NewServer()
+	pb.RegisterConsensusServiceServer(grpcServer, s)
+	log.Printf("server is running on port %s...\n", s.vars.serverPort)
 
-	if err := s.Serve(lis); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to run process: %v", err)
 	}
 }
 
-func initialize(porto string, portList []string) {
-	serverPort = porto
-	ports = portList
-	currentState = RELEASED
+func (s *process) checkReplies() {
+	for {
+		s.vars.mu.Lock()
+		if s.vars.currentState == WANTED && s.vars.replies == int32(len(s.vars.clients)-1) {
+			log.Printf("process %d has entered CS\n", s.vars.id)
+			s.vars.currentState = HELD
+			s.vars.isInsideCS = true
+			s.vars.mu.Unlock()
 
-	p, _ := strconv.Atoi(serverPort[:5])
-	id = int32(p)
+			// Simulate entering the critical section
 
-	createClients()
-	initProcessServer()
-}
+			s.vars.mu.Lock()
+			s.vars.isInsideCS = false
+			s.vars.currentState = RELEASED
+			s.vars.replies = 0
+			log.Printf("process %d has left CS\n", s.vars.id)
+			s.vars.mu.Unlock()
 
-func checkReplies() {
-	if replies == int32(len(ports)-1) {
-		currentState = HELD
-		for i := 0; i < len(clients); i++ {
-			multicastJoiningRequest(i)
+			// Send any deferred replies to other processes
+			s.sendDeferredReplies()
+		} else {
+			s.vars.mu.Unlock()
 		}
+		//time.Sleep(100 * time.Millisecond)
 	}
 }
 
-func multicastEnteringRequest(i int) {
-	_, err := clients[i].c.EnteringCS(clients[i].ctx, &pb.EnteringCSRequest{})
-	if err != nil {
-		log.Println("You took too long, please try again")
-	}
+func (s *process) shouldMulticast() bool {
+	s.vars.mu.Lock()
+	defer s.vars.mu.Unlock()
+
+	return s.vars.currentState == RELEASED
 }
 
-func multicastExitingRequest(i int) {
-	_, err := clients[i].c.ExitingCS(clients[i].ctx, &pb.ExitingCSRequest{})
-	if err != nil {
-		log.Println("You took too long, please try again")
-	}
-}
+func (s *process) initialize(porto string, portList []string) {
+	s.vars.serverPort = porto
+	s.vars.ports = portList
+	s.vars.currentState = RELEASED
 
-func multicastLamportRequest(i int) {
-	rep, err := clients[i].c.GetLamport(clients[i].ctx, &pb.LamportRequest{})
-	if err != nil {
-		log.Println("You took too long, please try again")
-	}
+	p, _ := strconv.Atoi(porto[len("localhost:"):])
+	s.vars.id = int32(p)
 
-	if rep.Lamport > lamport {
-		lamport = rep.Lamport + 1
-	}
-}
+	// start the server
+	go s.initProcessServer()
 
-func multicastJoiningRequest(i int) {
-	_, err := clients[i].c.JoiningQueue(clients[i].ctx, &pb.JoiningRequest{Port: id, Lamport: lamport})
-	if err != nil {
-		log.Println("You took too long, please try again")
-	}
-}
+	// wait to ensure the server is running
+	time.Sleep(2 * time.Second)
 
-func insideCS() {
-	if requests[0].id == int32(id) && isCSEmpty {
-		for i := 0; i < len(clients); i++ {
-			multicastEnteringRequest(i)
-			multicastLamportRequest(i)
-			fmt.Printf("Client %d has entered CS", id)
-			multicastExitingRequest(i)
-			fmt.Printf("Client %d has left CS", id)
-		}
-	}
+	s.createClients()
 }
 
 func Run(porto string, portList []string) {
-	initialize(porto, portList)
+	s := newProcess()
+	s.initialize(porto, portList)
 
-	go checkReplies()
-	go insideCS()
+	// start other goroutines
+	go s.checkReplies()
 
+	// main loop
 	for {
-		if !isInsideCS && !inRequest() {
-			replies = 0
-			multicastCSRequest()
+		if s.shouldMulticast() {
+			s.vars.mu.Lock()
+			s.vars.currentState = WANTED
+			s.vars.replies = 0
+			go s.multicastCSRequest()
+			s.vars.lamport++
+			s.vars.mu.Unlock()
+
 		}
+		time.Sleep(100 * time.Millisecond)
 	}
 }

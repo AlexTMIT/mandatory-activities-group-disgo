@@ -5,37 +5,21 @@ package consensus;
 option go_package = "https://github.com/AlexTMIT/mandatory-activities-group-disgo/tree/main/mandatory-assignment-4/consensus_service";
 
 service ConsensusService {
-    rpc CriticalSection (criticalRequest) returns (criticalReply) {}
-    rpc GetLamport (lamportRequest) returns (lamportReply) {}
-    rpc JoiningQueue (joiningRequest) returns (joiningReply) {}
-    rpc EnteringCS (enteringCSRequest) returns (enteringCSReply) {}
-    rpc ExitingCS (exitingCSRequest) returns (exitingCSReply) {}
+  rpc CriticalSection(CriticalRequest) returns (CriticalReply);
+  rpc ReplyCS(ReplyRequest) returns (ReplyReply);
 }
 
-message criticalRequest {
-    int32 lamport = 1;
-    int32 port = 2;
+message CriticalRequest {
+  int32 port = 1;
+  int32 lamport = 2;
 }
 
-message criticalReply {}
-
-message lamportRequest {}
-
-message lamportReply {
-    int32 lamport = 1;
+message CriticalReply {
+  bool grant = 1;
 }
 
-message joiningRequest {
-    int32 lamport = 1;
-    int32 port = 2;
+message ReplyRequest {
+  int32 port = 1;
 }
 
-message joiningReply{}
-
-message enteringCSRequest {}
-
-message enteringCSReply {}
-
-message exitingCSRequest {}
-
-message exitingCSReply {}
+message ReplyReply {}

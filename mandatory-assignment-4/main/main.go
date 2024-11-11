@@ -4,13 +4,12 @@ import (
 	"consensus/process"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 var n int
 
 func main() {
-	fmt.Print("Hello. How many processes do you want?")
+	fmt.Print("hello. how many processes do you want?")
 	fmt.Scanln(&n)
 	var ports []string
 	var entry = "localhost:"
@@ -26,7 +25,6 @@ func main() {
 		go process.Run(port, ports)
 	}
 
-	for {
-		time.Sleep(100000)
-	}
+	// keep the main function running
+	select {}
 }
