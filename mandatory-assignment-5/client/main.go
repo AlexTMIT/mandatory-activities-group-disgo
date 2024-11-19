@@ -35,14 +35,11 @@ func main() {
 }
 
 func queryBidding(ctx context.Context, c pb.ReplicationServiceClient) {
-	for running {
-		req, err := c.AuctionQuery(ctx, &pb.AQueryRequest{})
-		if err != nil {
-			log.Println("Could not fetch new messages")
-		}
-
-		log.Println(req.Result)
+	req, err := c.AuctionQuery(ctx, &pb.AQueryRequest{})
+	if err != nil {
+		log.Println("Could not query")
 	}
+	log.Println(req.Result)
 }
 
 func join(ctx context.Context, c pb.ReplicationServiceClient) {
@@ -58,7 +55,7 @@ func join(ctx context.Context, c pb.ReplicationServiceClient) {
 }
 
 func bid(ctx context.Context, c pb.ReplicationServiceClient, bid int) {
-	_, err := c.Bidding(ctx, &pb.BidRequest{ClientName: name, Amount: int32(bid)})
+	_, err := c.Bidding(ctx, &pb.BidRequest{Amount: int32(bid), ClientName: name})
 	if err != nil {
 		log.Println("Error in bidding.")
 	}

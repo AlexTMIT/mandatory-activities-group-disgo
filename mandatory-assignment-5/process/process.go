@@ -19,7 +19,7 @@ type server struct {
 }
 
 func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinReply, error) {
-	msg := fmt.Sprintf("Welcome %s to the auction!", req.ClientName)
+	msg := fmt.Sprintf("Welcome to the auction, %s!", req.ClientName)
 
 	return &pb.JoinReply{
 		Msg: msg,
@@ -35,13 +35,13 @@ func (s *server) Bidding(ctx context.Context, req *pb.BidRequest) (*pb.BidReply,
 	} else {
 		msg = fmt.Sprintln("Please enter an amount higher than the current bidding.")
 	}
-
+	fmt.Println(msg)
 	return &pb.BidReply{
 		Response: msg,
 	}, nil
 }
 
-func (s *server) ProcessActuionQuery(ctx context.Context, req *pb.AQueryRequest) (*pb.AQueryReply, error) {
+func (s *server) AuctionQuery(ctx context.Context, req *pb.AQueryRequest) (*pb.AQueryReply, error) {
 	var msg = ""
 	if finished {
 		msg = fmt.Sprintf("The bidding has finished on a total amount of %d, with %s as the winner!", bidAmount, highestBidder)
