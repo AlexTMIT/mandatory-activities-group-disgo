@@ -6,11 +6,21 @@ option go_package = "https://github.com/AlexTMIT/mandatory-activities-group-disg
 
 service ReplicationService {
   rpc Bidding(BidRequest) returns (BidReply);
+  rpc ProcessJoinRequest (JoinRequest) returns (JoinReply) {}
   rpc AuctionQuery(AQueryRequest) returns (AQueryReply);
+}
+
+message JoinRequest {
+  string clientName = 1;
+}
+
+message JoinReply {
+  string msg = 1;
 }
 
 message BidRequest {
   int32 amount = 1;
+  string clientName = 2;
 }
 
 message BidReply {
@@ -21,4 +31,5 @@ message AQueryRequest {}
 
 message AQueryReply {
   int32 currentAmount = 1;
+  string result = 2;
 }

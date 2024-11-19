@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ReplicationService_Bidding_FullMethodName      = "/replication.ReplicationService/Bidding"
-	ReplicationService_AuctionQuery_FullMethodName = "/replication.ReplicationService/AuctionQuery"
+	ReplicationService_Bidding_FullMethodName            = "/replication.ReplicationService/Bidding"
+	ReplicationService_ProcessJoinRequest_FullMethodName = "/replication.ReplicationService/ProcessJoinRequest"
+	ReplicationService_AuctionQuery_FullMethodName       = "/replication.ReplicationService/AuctionQuery"
 )
 
 // ReplicationServiceClient is the client API for ReplicationService service.
@@ -28,6 +29,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ReplicationServiceClient interface {
 	Bidding(ctx context.Context, in *BidRequest, opts ...grpc.CallOption) (*BidReply, error)
+	ProcessJoinRequest(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinReply, error)
 	AuctionQuery(ctx context.Context, in *AQueryRequest, opts ...grpc.CallOption) (*AQueryReply, error)
 }
 
@@ -49,6 +51,16 @@ func (c *replicationServiceClient) Bidding(ctx context.Context, in *BidRequest, 
 	return out, nil
 }
 
+func (c *replicationServiceClient) ProcessJoinRequest(ctx context.Context, in *JoinRequest, opts ...grpc.CallOption) (*JoinReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(JoinReply)
+	err := c.cc.Invoke(ctx, ReplicationService_ProcessJoinRequest_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *replicationServiceClient) AuctionQuery(ctx context.Context, in *AQueryRequest, opts ...grpc.CallOption) (*AQueryReply, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AQueryReply)
@@ -64,6 +76,7 @@ func (c *replicationServiceClient) AuctionQuery(ctx context.Context, in *AQueryR
 // for forward compatibility.
 type ReplicationServiceServer interface {
 	Bidding(context.Context, *BidRequest) (*BidReply, error)
+	ProcessJoinRequest(context.Context, *JoinRequest) (*JoinReply, error)
 	AuctionQuery(context.Context, *AQueryRequest) (*AQueryReply, error)
 	mustEmbedUnimplementedReplicationServiceServer()
 }
@@ -77,6 +90,9 @@ type UnimplementedReplicationServiceServer struct{}
 
 func (UnimplementedReplicationServiceServer) Bidding(context.Context, *BidRequest) (*BidReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Bidding not implemented")
+}
+func (UnimplementedReplicationServiceServer) ProcessJoinRequest(context.Context, *JoinRequest) (*JoinReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ProcessJoinRequest not implemented")
 }
 func (UnimplementedReplicationServiceServer) AuctionQuery(context.Context, *AQueryRequest) (*AQueryReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AuctionQuery not implemented")
@@ -120,6 +136,24 @@ func _ReplicationService_Bidding_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReplicationService_ProcessJoinRequest_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(JoinRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReplicationServiceServer).ProcessJoinRequest(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReplicationService_ProcessJoinRequest_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReplicationServiceServer).ProcessJoinRequest(ctx, req.(*JoinRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _ReplicationService_AuctionQuery_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AQueryRequest)
 	if err := dec(in); err != nil {
@@ -148,6 +182,10 @@ var ReplicationService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Bidding",
 			Handler:    _ReplicationService_Bidding_Handler,
+		},
+		{
+			MethodName: "ProcessJoinRequest",
+			Handler:    _ReplicationService_ProcessJoinRequest_Handler,
 		},
 		{
 			MethodName: "AuctionQuery",
