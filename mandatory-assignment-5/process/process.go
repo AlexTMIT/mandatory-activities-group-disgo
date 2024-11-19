@@ -13,6 +13,7 @@ import (
 var bidAmount int32 = 0
 var finished bool
 var highestBidder string
+var amountOfBids int = 0
 
 type server struct {
 	pb.UnimplementedReplicationServiceServer
@@ -28,13 +29,19 @@ func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*
 
 func (s *server) Bidding(ctx context.Context, req *pb.BidRequest) (*pb.BidReply, error) {
 	var msg = "Hello"
-	if req.Amount > bidAmount {
+	if amountOfBids == 10 || finished {
+		msg = "The bidding has ended."
+		finished = true
+	}
+	if req.Amount > bidAmount && !finished {
 		highestBidder = req.ClientName
 		msg = fmt.Sprintf("Client %s is bidding with an amount of %d", req.ClientName, req.Amount)
 		bidAmount = req.Amount
-	} else {
-		msg = fmt.Sprintln("Please enter an amount higher than the current bidding.")
+		amountOfBids++
+	} else if !finished {
+		msg = "Please enter an amount higher than the current bidding."
 	}
+
 	fmt.Println(msg)
 	return &pb.BidReply{
 		Response: msg,
@@ -45,9 +52,11 @@ func (s *server) AuctionQuery(ctx context.Context, req *pb.AQueryRequest) (*pb.A
 	var msg = ""
 	if finished {
 		msg = fmt.Sprintf("The bidding has finished on a total amount of %d, with %s as the winner!", bidAmount, highestBidder)
+		fmt.Println(msg)
 	} else {
 		msg = fmt.Sprintf("Current Bidding Amount is on %d", bidAmount)
 	}
+
 	return &pb.AQueryReply{
 		CurrentAmount: bidAmount,
 		Result:        msg,
