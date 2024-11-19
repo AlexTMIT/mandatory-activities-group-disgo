@@ -1,25 +1,24 @@
 syntax = "proto3";
 
-package consensus;
+package replication;
 
 option go_package = "https://github.com/AlexTMIT/mandatory-activities-group-disgo/tree/main/mandatory-assignment-5/replication_service";
 
-service ConsensusService {
-  rpc CriticalSection(CriticalRequest) returns (CriticalReply);
-  rpc ReplyCS(ReplyRequest) returns (ReplyReply);
+service ReplicationService {
+  rpc Bidding(BidRequest) returns (BidReply);
+  rpc AuctionQuery(AQueryRequest) returns (AQueryReply);
 }
 
-message CriticalRequest {
-  int32 port = 1;
-  int32 lamport = 2;
+message BidRequest {
+  int32 amount = 1;
 }
 
-message CriticalReply {
-  bool grant = 1;
+message BidReply {
+  string response = 1;
 }
 
-message ReplyRequest {
-  int32 port = 1;
-}
+message AQueryRequest {}
 
-message ReplyReply {}
+message AQueryReply {
+  int32 currentAmount = 1;
+}
