@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package consensus;
+
+option go_package = "https://github.com/AlexTMIT/mandatory-activities-group-disgo/tree/main/mandatory-assignment-5/replication_service";
+
+service ConsensusService {
+  rpc CriticalSection(CriticalRequest) returns (CriticalReply);
+  rpc ReplyCS(ReplyRequest) returns (ReplyReply);
+}
+
+message CriticalRequest {
+  int32 port = 1;
+  int32 lamport = 2;
+}
+
+message CriticalReply {
+  bool grant = 1;
+}
+
+message ReplyRequest {
+  int32 port = 1;
+}
+
+message ReplyReply {}
