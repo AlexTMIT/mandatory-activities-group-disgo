@@ -14,6 +14,7 @@ var bidAmount int32 = 0
 var finished bool
 var highestBidder string
 var amountOfBids int = 0
+var port string
 
 type server struct {
 	pb.UnimplementedReplicationServiceServer
@@ -67,13 +68,16 @@ func (s *server) AuctionQuery(ctx context.Context, req *pb.AQueryRequest) (*pb.A
 }
 
 func main() {
-	lis, err := net.Listen("tcp", "0.0.0.0:50051")
+	log.Println("0.0.0.0:500 + ?: ")
+	fmt.Scanln(&port)
+
+	lis, err := net.Listen("tcp", "0.0.0.0:500"+port)
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
 	pb.RegisterReplicationServiceServer(s, &server{})
-	log.Println("Server is running on port 50051...")
+	log.Println("Server is running on port 500" + port + "...")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

@@ -9,21 +9,34 @@ import (
 	pb "replication/grpc"
 	"strconv"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 var name string
-var ctx1, c1 = connectToServer("localhost:50051")
-var ctx2, c2 = connectToServer("localhost:50052")
+var ctx1 context.Context
+var c1 pb.ReplicationServiceClient
+var ctx2 context.Context
+var c2 pb.ReplicationServiceClient
+var responses []string
 
 func main() {
 	setName()
+	processJoin()
 
 	for {
 		listenToInput()
 	}
+}
+
+func processJoin() {
+	ctx1, c1 = connectToServer("localhost:50051")
+	ctx2, c2 = connectToServer("localhost:50052")
+
+	time.Sleep(time.Second)
+	printResponse()
 }
 
 func connectToServer(port string) (ctx context.Context, c pb.ReplicationServiceClient) {
@@ -31,7 +44,6 @@ func connectToServer(port string) (ctx context.Context, c pb.ReplicationServiceC
 	if err != nil {
 		log.Fatalf("did not connect %v", err)
 	}
-	defer conn.Close()
 	c = pb.NewReplicationServiceClient(conn)
 
 	ctx = context.Background()
@@ -58,15 +70,16 @@ func join(ctx context.Context, c pb.ReplicationServiceClient) {
 	if err != nil {
 		log.Println("Failed to process join request")
 	}
-	log.Printf("%s", req.Msg)
+	responses = append(responses, req.Msg)
 }
 
 func bid(ctx context.Context, c pb.ReplicationServiceClient, bid int) {
 	req, err := c.Bidding(ctx, &pb.BidRequest{Amount: int32(bid), ClientName: name})
 	if err != nil {
-		log.Println("Error in bidding.")
+		log.Println("One server is down.")
+		return
 	}
-	log.Println(req.Response)
+	responses = append(responses, req.Response)
 }
 
 func listenToInput() {
@@ -86,10 +99,21 @@ func processBid(split []string) {
 	if err != nil {
 		fmt.Println("Invalid input.")
 	}
-	log.Printf("bidding amount %d", currentAmount)
 
 	bid(ctx1, c1, currentAmount)
 	bid(ctx2, c2, currentAmount)
+
+	time.Sleep(time.Second)
+	printResponse()
+}
+
+func printResponse() {
+	if len(responses) > 0 {
+		log.Println(responses[0])
+		responses = responses[:0]
+	} else {
+		log.Println("hey... all servers are down :(")
+	}
 }
 
 func parseCommand(command string) ([]string, string) {
