@@ -55,10 +55,11 @@ func join(ctx context.Context, c pb.ReplicationServiceClient) {
 }
 
 func bid(ctx context.Context, c pb.ReplicationServiceClient, bid int) {
-	_, err := c.Bidding(ctx, &pb.BidRequest{Amount: int32(bid), ClientName: name})
+	req, err := c.Bidding(ctx, &pb.BidRequest{Amount: int32(bid), ClientName: name})
 	if err != nil {
 		log.Println("Error in bidding.")
 	}
+	log.Println(req.Response)
 }
 
 func listenToInput(ctx context.Context, c pb.ReplicationServiceClient) {

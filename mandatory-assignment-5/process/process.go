@@ -20,7 +20,7 @@ type server struct {
 }
 
 func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinReply, error) {
-	msg := fmt.Sprintf("Welcome to the auction, %s!", req.ClientName)
+	msg := fmt.Sprintf("Welcome to the auction, %s! \nTo bid an amount, type 'bid'.\nTo find the current highest bidder, type 'query'.", req.ClientName)
 
 	return &pb.JoinReply{
 		Msg: msg,
@@ -30,19 +30,21 @@ func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*
 func (s *server) Bidding(ctx context.Context, req *pb.BidRequest) (*pb.BidReply, error) {
 	var msg = "Hello"
 	if amountOfBids == 10 || finished {
-		msg = "The bidding has ended."
+		msg = fmt.Sprintln("FAIL:" + "The bidding has ended.")
 		finished = true
 	}
 	if req.Amount > bidAmount && !finished {
 		highestBidder = req.ClientName
-		msg = fmt.Sprintf("Client %s is bidding with an amount of %d", req.ClientName, req.Amount)
+
+		msg = "SUCCESS"
+		fmt.Printf("Client %s is bidding with an amount of %d \n", req.ClientName, req.Amount)
 		bidAmount = req.Amount
 		amountOfBids++
 	} else if !finished {
-		msg = "Please enter an amount higher than the current bidding."
+		msg = "FAIL: Please enter an amount higher than the current bidding."
+		fmt.Printf("Client %s has entered a bidding amount too low.\n", req.ClientName)
 	}
 
-	fmt.Println(msg)
 	return &pb.BidReply{
 		Response: msg,
 	}, nil
