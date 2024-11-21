@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	pb "replication/grpc"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc"
@@ -78,8 +79,10 @@ func listenToInput(ctx context.Context, c pb.ReplicationServiceClient) {
 	if keyword == "query" {
 		queryBidding(ctx, c)
 	} else if keyword == "bid" {
-		fmt.Println("How much would you like to bid?")
-		fmt.Scanln(&currentAmount)
+		currentAmount, err := strconv.Atoi(split[1])
+		if err != nil {
+			fmt.Println("Invalid input.")
+		}
 		bid(ctx, c, currentAmount)
 	}
 }
