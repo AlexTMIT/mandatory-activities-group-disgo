@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -10,29 +11,30 @@ import (
 	"google.golang.org/grpc"
 )
 
+var lamport int = 0
 var bidAmount int32 = 0
 var finished bool
 var highestBidder string
-var amountOfBids int = 0
 var port string
 
 type server struct {
 	pb.UnimplementedReplicationServiceServer
 }
 
-func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinReply, error) {
-	msg := fmt.Sprintf("Welcome to the auction, %s! \nTo bid an amount, type 'bid'.\nTo find the current highest bidder, type 'query'.", req.ClientName)
-	fmt.Printf("Client %s has joined the auction.\n", req.ClientName)
-	return &pb.JoinReply{
-		Msg: msg,
-	}, nil
-}
-
 func (s *server) Bidding(ctx context.Context, req *pb.BidRequest) (*pb.BidReply, error) {
-	var msg = "Hello"
-	if amountOfBids == 10 || finished {
-		msg = fmt.Sprintln("FAIL:" + "The bidding has ended.")
-		fmt.Println("The bidding has now ended.")
+	lamport++
+	if lamport < int(req.Lamport) {
+		log.Println("This server's lamport was lower than the bidder")
+		log.Println("The server has previously crashed")
+
+		return nil, errors.New("server is lacking behind, and will therefore not respond")
+	}
+
+	var msg string
+	log.Printf("Lamport %d server %s", lamport, port)
+	if lamport == 7 || finished {
+		msg = "FAIL: The bidding has ended."
+		fmt.Println(msg[6:])
 		finished = true
 	}
 	if req.Amount > bidAmount && !finished {
@@ -41,7 +43,6 @@ func (s *server) Bidding(ctx context.Context, req *pb.BidRequest) (*pb.BidReply,
 		msg = "SUCCESS"
 		fmt.Printf("Client %s is bidding with an amount of %d \n", req.ClientName, req.Amount)
 		bidAmount = req.Amount
-		amountOfBids++
 	} else if !finished {
 		msg = "FAIL: Please enter an amount higher than the current bidding."
 		fmt.Printf("Client %s has entered a bidding amount too low.\n", req.ClientName)

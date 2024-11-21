@@ -21,10 +21,12 @@ message JoinReply {
 message BidRequest {
   int32 amount = 1;
   string clientName = 2;
+  int32 lamport = 3;
 }
 
 message BidReply {
   string response = 1;
+  int32 lamport = 2;
 }
 
 message AQueryRequest {}

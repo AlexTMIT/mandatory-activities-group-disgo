@@ -21,9 +21,11 @@ var c1 pb.ReplicationServiceClient
 var ctx2 context.Context
 var c2 pb.ReplicationServiceClient
 var responses []string
+var lamport int = 0
 
 func main() {
 	setName()
+	printTutorial()
 	processJoin()
 
 	for {
@@ -31,12 +33,13 @@ func main() {
 	}
 }
 
+func printTutorial() {
+	log.Printf("Welcome to the auction, %s! \nTo bid an amount, type 'bid'.\nTo find the current highest bidder, type 'query'.", name)
+}
+
 func processJoin() {
 	ctx1, c1 = connectToServer("localhost:50051")
 	ctx2, c2 = connectToServer("localhost:50052")
-
-	time.Sleep(time.Second)
-	printResponse()
 }
 
 func connectToServer(port string) (ctx context.Context, c pb.ReplicationServiceClient) {
@@ -47,7 +50,6 @@ func connectToServer(port string) (ctx context.Context, c pb.ReplicationServiceC
 	c = pb.NewReplicationServiceClient(conn)
 
 	ctx = context.Background()
-	join(ctx, c)
 
 	return
 }
@@ -60,26 +62,20 @@ func setName() {
 func queryBidding(ctx context.Context, c pb.ReplicationServiceClient) {
 	req, err := c.AuctionQuery(ctx, &pb.AQueryRequest{})
 	if err != nil {
-		log.Println("Could not query")
+		log.Println("One server is down")
+		return
 	}
 	log.Println(req.Result)
 }
 
-func join(ctx context.Context, c pb.ReplicationServiceClient) {
-	req, err := c.ProcessJoinRequest(ctx, &pb.JoinRequest{ClientName: name})
-	if err != nil {
-		log.Println("Failed to process join request")
-	}
-	responses = append(responses, req.Msg)
-}
-
 func bid(ctx context.Context, c pb.ReplicationServiceClient, bid int) {
-	req, err := c.Bidding(ctx, &pb.BidRequest{Amount: int32(bid), ClientName: name})
+	req, err := c.Bidding(ctx, &pb.BidRequest{Amount: int32(bid), ClientName: name, Lamport: int32(lamport)})
 	if err != nil {
 		log.Println("One server is down.")
 		return
 	}
 	responses = append(responses, req.Response)
+	lamport = int(req.Lamport)
 }
 
 func listenToInput() {
@@ -99,6 +95,8 @@ func processBid(split []string) {
 	if err != nil {
 		fmt.Println("Invalid input.")
 	}
+
+	lamport++
 
 	bid(ctx1, c1, currentAmount)
 	bid(ctx2, c2, currentAmount)
