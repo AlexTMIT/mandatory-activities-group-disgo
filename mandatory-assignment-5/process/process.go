@@ -21,7 +21,7 @@ type server struct {
 
 func (s *server) ProcessJoinRequest(ctx context.Context, req *pb.JoinRequest) (*pb.JoinReply, error) {
 	msg := fmt.Sprintf("Welcome to the auction, %s! \nTo bid an amount, type 'bid'.\nTo find the current highest bidder, type 'query'.", req.ClientName)
-
+	fmt.Printf("Client %s has joined the auction.\n", req.ClientName)
 	return &pb.JoinReply{
 		Msg: msg,
 	}, nil
@@ -31,6 +31,7 @@ func (s *server) Bidding(ctx context.Context, req *pb.BidRequest) (*pb.BidReply,
 	var msg = "Hello"
 	if amountOfBids == 10 || finished {
 		msg = fmt.Sprintln("FAIL:" + "The bidding has ended.")
+		fmt.Println("The bidding has now ended.")
 		finished = true
 	}
 	if req.Amount > bidAmount && !finished {
