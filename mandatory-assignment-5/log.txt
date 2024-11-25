@@ -1,0 +1,79 @@
+Server 1:
+go run process/process.go 
+2024/11/25 12:04:40 0.0.0.0:500 + ?: 
+51
+2024/11/25 12:05:09 Server is running on port 50051...
+2024/11/25 12:06:28 Lamport 1 server 51
+Client cat is bidding with an amount of 5 
+2024/11/25 12:06:39 Lamport 2 server 51
+Client sara is bidding with an amount of 10 
+2024/11/25 12:06:54 Lamport 3 server 51
+Client sara is bidding with an amount of 11 
+^Csignal: interrupt
+
+Server 2:
+go run process/process.go
+2024/11/25 12:04:50 0.0.0.0:500 + ?: 
+52
+2024/11/25 12:05:11 Server is running on port 50052...
+2024/11/25 12:06:28 Lamport 1 server 52
+Client cat is bidding with an amount of 5 
+2024/11/25 12:06:39 Lamport 2 server 52
+Client sara is bidding with an amount of 10 
+2024/11/25 12:06:54 Lamport 3 server 52
+Client sara is bidding with an amount of 11 
+2024/11/25 12:07:16 Lamport 4 server 52
+Client cat is bidding with an amount of 17 
+2024/11/25 12:07:28 Lamport 5 server 52
+Client sara is bidding with an amount of 18 
+2024/11/25 12:07:58 Lamport 6 server 52
+Client cat has entered a bidding amount too low.
+2024/11/25 12:08:18 Lamport 7 server 52
+The bidding has ended.
+2024/11/25 12:08:38 Lamport 8 server 52
+The bidding has ended.
+The bidding has finished on a total amount of 18, with sara as the winner!
+The bidding has finished on a total amount of 18, with sara as the winner!
+
+Client 1:
+go run client/client.go 
+2024/11/25 12:05:48 Please input your name
+sara
+2024/11/25 12:05:59 Welcome to the auction, sara! 
+To bid an amount, type 'bid'.
+To find the current highest bidder, type 'query'.
+bid 10
+2024/11/25 12:06:40 SUCCESS
+bid 11
+2024/11/25 12:06:55 SUCCESS
+bid 18
+2024/11/25 12:07:28 One server is down.
+2024/11/25 12:07:29 SUCCESS
+bid 100
+2024/11/25 12:08:38 One server is down.
+2024/11/25 12:08:39 FAIL: The bidding has ended.
+query
+2024/11/25 12:08:48 One server is down
+2024/11/25 12:08:48 The bidding has finished on a total amount of 18, with sara as the winner!
+
+Client 2:
+go run client/client.go 
+2024/11/25 12:05:56 Please input your name
+cat
+2024/11/25 12:06:03 Welcome to the auction, cat! 
+To bid an amount, type 'bid'.
+To find the current highest bidder, type 'query'.
+bid 5
+2024/11/25 12:06:29 SUCCESS
+bid 17
+2024/11/25 12:07:16 One server is down.
+2024/11/25 12:07:17 SUCCESS
+bid 10
+2024/11/25 12:07:58 One server is down.
+2024/11/25 12:07:59 FAIL: Please enter an amount higher than the current bidding.
+bid 780 
+2024/11/25 12:08:18 One server is down.
+2024/11/25 12:08:19 FAIL: The bidding has ended.
+query
+2024/11/25 12:08:52 One server is down
+2024/11/25 12:08:52 The bidding has finished on a total amount of 18, with sara as the winner!
